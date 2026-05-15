@@ -1,0 +1,95 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  // NOTE: Update this to include the paths to all of your component files.
+  content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
+  presets: [require("nativewind/preset")],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: "#58CC02",
+          light: "#89E219",
+          dark: "#46A302",
+          border: "#46A302",
+        },
+        secondary: {
+          DEFAULT: "#1CB0F6",
+          light: "#8EE0FF",
+          dark: "#1899D6",
+          border: "#1899D6",
+        },
+        yellow: {
+          DEFAULT: "#FFC800",
+          light: "#FFEB3B",
+          dark: "#E5A500",
+          border: "#E5A500",
+        },
+        orange: {
+          DEFAULT: "#FF9600",
+          dark: "#E58600",
+          border: "#E58600",
+        },
+        red: {
+          DEFAULT: "#FF4B4B",
+          dark: "#E53935",
+          border: "#E53935",
+        },
+        purple: {
+          DEFAULT: "#CE82FF",
+          dark: "#A560E8",
+          border: "#A560E8",
+        },
+        pink: {
+          DEFAULT: "#FF66FF",
+          dark: "#CE55CE",
+          border: "#CE55CE",
+        },
+        neutral: {
+          white: "#FFFFFF",
+          gray100: "#F7F7F7",
+          gray200: "#E5E5E5",
+          gray300: "#AFB6BB",
+          gray400: "#777777",
+          gray500: "#4B4B4B",
+          black: "#000000",
+        },
+      },
+      spacing: {
+        0: "0px",
+        1: "4px",
+        2: "8px",
+        3: "12px",
+        4: "16px",
+        5: "20px",
+        6: "24px",
+        8: "32px",
+        10: "40px",
+        12: "48px",
+        16: "64px",
+        20: "80px",
+        24: "96px",
+      },
+      borderRadius: {
+        none: "0",
+        sm: "8px",
+        DEFAULT: "12px",
+        md: "16px",
+        lg: "20px",
+        xl: "24px",
+        "2xl": "32px",
+        full: "9999px",
+      },
+      fontSize: {
+        xs: "12px",
+        sm: "14px",
+        base: "16px",
+        lg: "18px",
+        xl: "20px",
+        "2xl": "24px",
+        "3xl": "32px",
+        "4xl": "36px",
+      },
+    },
+  },
+  plugins: [],
+};

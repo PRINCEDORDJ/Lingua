@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* Layout Helpers */
+  .flex-center {
+    @apply items-center justify-center;
+  }
+
+  /* Button Building Blocks */
+  .btn-base {
+    @apply flex-center rounded-xl px-4 py-3;
+  }
+
+  .btn-3d {
+    @apply border-b-4 active:border-b-0 active:translate-y-1;
+  }
+
+  /* Composed Button Components */
+  .primary-btn {
+    @apply btn-base btn-3d bg-primary border-primary-border;
+  }
+
+  .secondary-btn {
+    @apply btn-base btn-3d bg-secondary border-secondary-border;
+  }
+
+  .yellow-btn {
+    @apply btn-base btn-3d bg-yellow border-yellow-border;
+  }
+
+  .orange-btn {
+    @apply btn-base btn-3d bg-orange border-orange-border;
+  }
+
+  .purple-btn {
+    @apply btn-base btn-3d bg-purple border-purple-border;
+  }
+
+  .pink-btn {
+    @apply btn-base btn-3d bg-pink border-pink-border;
+  }
+
+  .ghost-btn {
+    @apply btn-base border-2 border-neutral-gray200 bg-transparent active:bg-neutral-gray100;
+  }
+
+  /* Typography Components */
+  .h1 {
+    @apply text-3xl font-bold text-neutral-gray500;
+  }
+
+  .h2 {
+    @apply text-2xl font-bold text-neutral-gray500;
+  }
+
+  .h3 {
+    @apply text-lg font-bold text-neutral-gray500;
+  }
+
+  .body {
+    @apply text-base font-normal text-neutral-gray500;
+  }
+
+  .caption {
+    @apply text-sm font-semibold text-neutral-gray300;
+  }
+
+  /* Color Utilities */
+  .lingua-purple {
+    @apply text-purple;
+  }
+
+  /* Card Components */
+  .card-base {
+    @apply bg-neutral-white border-2 border-neutral-gray200 rounded-2xl;
+  }
+
+  .card {
+    @apply card-base p-4;
+  }
+
+  /* Page Layouts */
+  .container {
+    @apply flex-1 bg-neutral-white px-4;
+  }
+}
