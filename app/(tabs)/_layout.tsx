@@ -1,11 +1,10 @@
 import { Tabs, Redirect } from "expo-router";
 import { useAuth } from "@clerk/expo";
-import { useUserStore } from "@/store/useUserStore";
 import { CustomTabBar } from "@/components/CustomTabBar";
 
 export default function TabsLayout() {
   const { isSignedIn } = useAuth();
-  const { selectedLanguageId } = useUserStore();
+ 
 
   if (!isSignedIn) return <Redirect href="/(auth)/sign-in" />;
 

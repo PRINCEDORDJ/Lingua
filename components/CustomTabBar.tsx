@@ -13,17 +13,27 @@ const TAB_BAR_HEIGHT = 70;
 
 export const CustomTabBar = ({ state, descriptors, navigation }: any) => {
   const insets = useSafeAreaInsets();
-  const tabWidth = width / state.routes.length;
   
-  const translateX = useSharedValue(state.index * tabWidth);
+  // Filter out routes that shouldn't be in the tab bar
+  const visibleRoutes = state.routes.filter((route: any) => {
+    const { options } = descriptors[route.key];
+    return options.href !== null;
+  });
+
+  const activeVisibleIndex = visibleRoutes.findIndex(
+    (route: any) => route.key === state.routes[state.index].key
+  );
+
+  const tabWidth = width / visibleRoutes.length;
+  const translateX = useSharedValue((activeVisibleIndex >= 0 ? activeVisibleIndex : 0) * tabWidth);
 
   useEffect(() => {
-    translateX.value = withSpring(state.index * tabWidth, {
+    translateX.value = withSpring((activeVisibleIndex >= 0 ? activeVisibleIndex : 0) * tabWidth, {
       damping: 20,
       stiffness: 150,
       mass: 1,
     });
-  }, [state.index, tabWidth]);
+  }, [activeVisibleIndex, tabWidth]);
 
   const animatedCircleStyle = useAnimatedStyle(() => {
     return {
@@ -57,9 +67,9 @@ export const CustomTabBar = ({ state, descriptors, navigation }: any) => {
       </Animated.View>
 
       {/* Tabs */}
-      {state.routes.map((route: any, index: number) => {
+      {visibleRoutes.map((route: any, index: number) => {
         const { options } = descriptors[route.key];
-        const isFocused = state.index === index;
+        const isFocused = activeVisibleIndex === index;
 
         const onPress = () => {
           const event = navigation.emit({

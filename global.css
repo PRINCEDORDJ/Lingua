@@ -63,12 +63,36 @@
     @apply text-lg font-bold text-neutral-gray500;
   }
 
+  .h4 {
+    @apply text-base font-bold text-neutral-gray500;
+  }
+
   .body {
     @apply text-base font-normal text-neutral-gray500;
   }
 
+  .body-sm {
+    @apply text-sm font-normal text-neutral-gray400;
+  }
+
   .caption {
     @apply text-sm font-semibold text-neutral-gray300;
+  }
+
+  .text-neutral-dark {
+    @apply text-neutral-gray500;
+  }
+
+  .text-neutral-gray {
+    @apply text-neutral-gray400;
+  }
+
+  .border-neutral-light {
+    @apply border-neutral-gray200;
+  }
+
+  .bg-neutral-light {
+    @apply bg-neutral-gray100;
   }
 
   /* Color Utilities */
