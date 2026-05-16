@@ -91,6 +91,7 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
   }, [visible]);
 
   const handleTextChange = async (text: string) => {
+    if (isLoading) return;
     const numericValue = text.replace(/[^0-9]/g, "");
     setCode(numericValue);
 
@@ -100,6 +101,7 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
   };
 
   const handleVerifyPress = async () => {
+    if (isLoading) return;
     if (code.length === 6 && onVerify) {
       await onVerify(code);
     }

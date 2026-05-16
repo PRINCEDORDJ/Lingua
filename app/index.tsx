@@ -29,7 +29,7 @@ export default function Index() {
 
   // If the user is already authenticated, redirect to the home tabs
   if (isSignedIn) {
-    return <Redirect href={"/(tabs)/index" as any} />;
+    return <Redirect href={"/(tabs)"} />;
   }
 
   return (

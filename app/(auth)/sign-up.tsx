@@ -20,6 +20,7 @@ import { GoogleIcon } from "@/components/GoogleIcon";
 import { useSignUp } from "@clerk/expo/legacy";
 import { useSSO } from "@clerk/expo";
 import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -29,18 +30,27 @@ export default function SignUpScreen() {
   const { startSSOFlow } = useSSO();
 
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const [verificationError, setVerificationError] = useState("");
 
   const onSignUpPress = async () => {
     if (!isLoaded) return;
+    if (!email || !password) {
+      setError("Please enter both email and password.");
+      return;
+    }
 
+    setError("");
     setIsLoading(true);
     try {
-      // Start the sign-up process using the email address
+      // Start the sign-up process using the email address and password
       await signUp.create({
         emailAddress: email,
+        password,
       });
 
       // Send the verification code to the user's email
@@ -50,7 +60,12 @@ export default function SignUpScreen() {
       setModalVisible(true);
     } catch (err: any) {
       console.error(JSON.stringify(err, null, 2));
-      // You could add a toast or alert here
+      const clerkError = err.errors?.[0];
+      if (clerkError?.code === "form_identifier_exists") {
+        setError("This email is already registered. Try signing in instead.");
+      } else {
+        setError(clerkError?.message || "An error occurred. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +84,7 @@ export default function SignUpScreen() {
       if (completeSignUp.status === "complete") {
         await setActive({ session: completeSignUp.createdSessionId });
         setModalVisible(false);
-        router.replace("/");
+        router.replace("/(tabs)");
       } else {
         console.error(JSON.stringify(completeSignUp, null, 2));
       }
@@ -92,14 +107,15 @@ export default function SignUpScreen() {
 
   const onSelectAuth = async (strategy: "oauth_google" | "oauth_apple") => {
     try {
+      const redirectUrl = Linking.createURL("/(tabs)");
       const { createdSessionId, setActive: setSessionActive } = await startSSOFlow({
         strategy,
-        redirectUrl: "duolinguoclone://oauth-callback",
+        redirectUrl,
       });
 
       if (createdSessionId) {
         await setSessionActive!({ session: createdSessionId });
-        router.replace("/");
+        router.replace("/(tabs)");
       }
     } catch (err) {
       console.error(err);
@@ -146,6 +162,13 @@ export default function SignUpScreen() {
 
           {/* Input Fields */}
           <View className="mt-10 gap-y-4">
+            {error ? (
+              <View className="bg-red-50 p-4 rounded-2xl border-2 border-red-100 flex-row items-center">
+                <Ionicons name="alert-circle" size={20} color="#ef4444" />
+                <Text className="ml-2 text-red-600 font-medium flex-1">{error}</Text>
+              </View>
+            ) : null}
+
             <View className="bg-gray-100 rounded-2xl px-5 h-16 flex-row items-center border-2 border-transparent focus:border-[#5D3FD3]">
               <Ionicons name="mail-outline" size={20} color="#6b7280" />
               <TextInput
@@ -159,13 +182,33 @@ export default function SignUpScreen() {
               />
             </View>
 
+            <View className="bg-gray-100 rounded-2xl px-5 h-16 flex-row items-center border-2 border-transparent focus:border-[#5D3FD3]">
+              <Ionicons name="lock-closed-outline" size={20} color="#6b7280" />
+              <TextInput
+                placeholder="Password"
+                className="flex-1 ml-3 text-lg text-gray-800"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+                editable={!isLoading}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons 
+                  name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                  size={20} 
+                  color="#6b7280" 
+                />
+              </TouchableOpacity>
+            </View>
+
             <TouchableOpacity
               activeOpacity={0.8}
               className={`h-16 rounded-2xl items-center justify-center shadow-lg ${
-                email ? "bg-[#5D3FD3] shadow-purple-500/30" : "bg-gray-300 shadow-none"
+                email && password ? "bg-[#5D3FD3] shadow-purple-500/30" : "bg-gray-300 shadow-none"
               }`}
               onPress={onSignUpPress}
-              disabled={!email || isLoading}
+              disabled={!email || !password || isLoading}
             >
               {isLoading && !modalVisible ? (
                 <ActivityIndicator color="#fff" />
