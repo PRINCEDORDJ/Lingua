@@ -22,7 +22,6 @@ import { useSSO } from "@clerk/expo";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 
-WebBrowser.maybeCompleteAuthSession();
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -84,7 +83,9 @@ export default function SignUpScreen() {
       if (completeSignUp.status === "complete") {
         await setActive({ session: completeSignUp.createdSessionId });
         setModalVisible(false);
-        router.replace("/(tabs)");
+        // Let (auth)/_layout.tsx handle the redirect reactively
+        // New users (no selectedLanguageId) → /language-selection
+        // Returning users → /(tabs)
       } else {
         console.error(JSON.stringify(completeSignUp, null, 2));
       }
@@ -107,7 +108,7 @@ export default function SignUpScreen() {
 
   const onSelectAuth = async (strategy: "oauth_google" | "oauth_apple") => {
     try {
-      const redirectUrl = Linking.createURL("/(tabs)");
+      const redirectUrl = Linking.createURL("/language-selection");
       const { createdSessionId, setActive: setSessionActive } = await startSSOFlow({
         strategy,
         redirectUrl,
@@ -115,7 +116,7 @@ export default function SignUpScreen() {
 
       if (createdSessionId) {
         await setSessionActive!({ session: createdSessionId });
-        router.replace("/(tabs)");
+        // Let (auth)/_layout.tsx handle the redirect reactively
       }
     } catch (err) {
       console.error(err);

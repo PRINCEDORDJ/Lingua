@@ -75,5 +75,6 @@ export interface Language {
   name: string;
   code: string;
   flag: string; // e.g., '🇪🇸' or 'fr'
+  learnerCount?: string;
   units: Unit[];
 }

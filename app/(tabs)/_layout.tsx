@@ -1,41 +1,52 @@
 import { Tabs, Redirect } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/expo";
+import { useUserStore } from "@/store/useUserStore";
+import { CustomTabBar } from "@/components/CustomTabBar";
 
 export default function TabsLayout() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn } = useAuth();
+  const { selectedLanguageId } = useUserStore();
 
-  if (!isLoaded) return null;
-
-  if (!isSignedIn) {
-    return <Redirect href="/(auth)/sign-in" />;
-  }
+  if (!isSignedIn) return <Redirect href="/(auth)/sign-in" />;
 
   return (
     <Tabs
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#5D3FD3",
-        tabBarStyle: {
-          height: 60,
-          paddingBottom: 10,
-        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
+          title: "Home",
+        }}
+      />
+      <Tabs.Screen
+        name="learn"
+        options={{
           title: "Learn",
-          tabBarIcon: ({ color }) => <Ionicons name="book" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="ai-teacher"
+        options={{
+          title: "Teacher",
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: "Chat",
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
         }}
       />
     </Tabs>
   );
 }
+

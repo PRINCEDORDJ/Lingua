@@ -42,6 +42,10 @@
     @apply btn-base btn-3d bg-pink border-pink-border;
   }
 
+  .red-btn {
+    @apply btn-base btn-3d bg-red border-red-border;
+  }
+
   .ghost-btn {
     @apply btn-base border-2 border-neutral-gray200 bg-transparent active:bg-neutral-gray100;
   }

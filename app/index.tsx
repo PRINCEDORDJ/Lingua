@@ -11,26 +11,13 @@ import { Link, Redirect, useRouter } from "expo-router";
 import { images } from "@/constants/images";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/expo";
+import { useUserStore } from "@/store/useUserStore";
 
 export default function Index() {
   const router = useRouter();
   const { isSignedIn, isLoaded } = useAuth();
+  const { selectedLanguageId } = useUserStore();
 
-  // Show loading state while Clerk resolves auth
-  if (!isLoaded) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color="#5D3FD3" />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // If the user is already authenticated, redirect to the home tabs
-  if (isSignedIn) {
-    return <Redirect href={"/(tabs)"} />;
-  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -78,6 +65,14 @@ export default function Index() {
               I already have an account
             </Text>
           </TouchableOpacity>
+
+          <Link href="/language-selection" asChild>
+            <TouchableOpacity className="items-center py-2">
+              <Text className="text-purple-600 font-bold text-base">
+                Change Language
+              </Text>
+            </TouchableOpacity>
+          </Link>
         </View>
       </View>
     </SafeAreaView>
