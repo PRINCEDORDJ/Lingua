@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "@/constants/images";
@@ -16,15 +17,110 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { VerificationModal } from "@/components/VerificationModal";
 import { GoogleIcon } from "@/components/GoogleIcon";
+import { useSignIn } from "@clerk/expo/legacy";
+import { useSSO } from "@clerk/expo";
+import * as WebBrowser from "expo-web-browser";
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   const router = useRouter();
+  const { isLoaded, signIn, setActive } = useSignIn();
+  const { startSSOFlow } = useSSO();
+
   const [email, setEmail] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [verificationError, setVerificationError] = useState("");
 
-  const handleContinue = () => {
-    if (email) {
-      setModalVisible(true);
+  const onSignInPress = async () => {
+    if (!isLoaded) return;
+
+    setIsLoading(true);
+    try {
+      const { supportedFirstFactors } = await signIn.create({
+        identifier: email,
+      });
+
+      // Find the email code factor
+      const emailCodeFactor = supportedFirstFactors?.find(
+        (f) => f.strategy === "email_code"
+      ) as { strategy: "email_code"; emailAddressId: string } | undefined;
+
+      if (emailCodeFactor) {
+        await signIn.prepareFirstFactor({
+          strategy: "email_code",
+          emailAddressId: emailCodeFactor.emailAddressId,
+        });
+        setModalVisible(true);
+      }
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2));
+      // Handle error (e.g., user not found)
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onVerify = async (code: string) => {
+    if (!isLoaded) return;
+
+    setVerificationError("");
+    setIsLoading(true);
+    try {
+      const completeSignIn = await signIn.attemptFirstFactor({
+        strategy: "email_code",
+        code,
+      });
+
+      if (completeSignIn.status === "complete") {
+        await setActive({ session: completeSignIn.createdSessionId });
+        setModalVisible(false);
+        router.replace("/");
+      } else {
+        console.error(JSON.stringify(completeSignIn, null, 2));
+      }
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2));
+      setVerificationError(err.errors?.[0]?.message || "Invalid code. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onResend = async () => {
+    if (!isLoaded) return;
+    try {
+      // Re-prepare the first factor
+      const { supportedFirstFactors } = signIn;
+      const emailCodeFactor = supportedFirstFactors?.find(
+        (f) => f.strategy === "email_code"
+      ) as { strategy: "email_code"; emailAddressId: string } | undefined;
+
+      if (emailCodeFactor) {
+        await signIn.prepareFirstFactor({
+          strategy: "email_code",
+          emailAddressId: emailCodeFactor.emailAddressId,
+        });
+      }
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2));
+    }
+  };
+
+  const onSelectAuth = async (strategy: "oauth_google" | "oauth_apple") => {
+    try {
+      const { createdSessionId, setActive: setSessionActive } = await startSSOFlow({
+        strategy,
+        redirectUrl: "duolinguoclone://oauth-callback",
+      });
+
+      if (createdSessionId) {
+        await setSessionActive!({ session: createdSessionId });
+        router.replace("/");
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -77,6 +173,7 @@ export default function SignInScreen() {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                editable={!isLoading}
               />
             </View>
 
@@ -85,12 +182,16 @@ export default function SignInScreen() {
               className={`h-16 rounded-2xl items-center justify-center shadow-lg ${
                 email ? "bg-[#5D3FD3] shadow-purple-500/30" : "bg-gray-300 shadow-none"
               }`}
-              onPress={handleContinue}
-              disabled={!email}
+              onPress={onSignInPress}
+              disabled={!email || isLoading}
             >
-              <Text className="text-white font-bold text-lg uppercase tracking-wider">
-                Continue
-              </Text>
+              {isLoading && !modalVisible ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text className="text-white font-bold text-lg uppercase tracking-wider">
+                  Continue
+                </Text>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -106,6 +207,7 @@ export default function SignInScreen() {
             <TouchableOpacity 
               className="flex-row items-center justify-center h-16 rounded-2xl border-2 border-gray-100 bg-white"
               activeOpacity={0.7}
+              onPress={() => onSelectAuth("oauth_google")}
             >
               <GoogleIcon size={24} />
               <Text className="ml-3 text-lg font-bold text-gray-700">Google</Text>
@@ -114,6 +216,7 @@ export default function SignInScreen() {
             <TouchableOpacity 
               className="flex-row items-center justify-center h-16 rounded-2xl border-2 border-gray-100 bg-white"
               activeOpacity={0.7}
+              onPress={() => onSelectAuth("oauth_apple")}
             >
               <Ionicons name="logo-apple" size={24} color="black" />
               <Text className="ml-3 text-lg font-bold text-gray-700">Apple</Text>
@@ -134,6 +237,10 @@ export default function SignInScreen() {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         email={email}
+        onVerify={onVerify}
+        onResend={onResend}
+        isLoading={isLoading}
+        error={verificationError}
       />
     </SafeAreaView>
   );

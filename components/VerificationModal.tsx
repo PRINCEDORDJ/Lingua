@@ -8,45 +8,63 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 
 interface VerificationModalProps {
   visible: boolean;
   onClose: () => void;
   email: string;
+  /** Called with the 6-digit code. Perform real Clerk verification here. */
+  onVerify?: (code: string) => Promise<void>;
+  /** Called to resend the verification code. */
+  onResend?: () => Promise<void>;
+  /** Loading state driven by the parent (e.g. while Clerk fetches) */
+  isLoading?: boolean;
+  /** Error message to display under the OTP digits */
+  error?: string;
 }
 
 export const VerificationModal: React.FC<VerificationModalProps> = ({
   visible,
   onClose,
   email,
+  onVerify,
+  onResend,
+  isLoading = false,
+  error,
 }) => {
   const [code, setCode] = useState("");
-  const router = useRouter();
   const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     if (visible) {
-      // Small delay to ensure modal is rendered before focusing
+      setCode("");
       setTimeout(() => {
         inputRef.current?.focus();
       }, 500);
     }
   }, [visible]);
 
-  const handleTextChange = (text: string) => {
-    // Only allow numbers
+  const handleTextChange = async (text: string) => {
     const numericValue = text.replace(/[^0-9]/g, "");
     setCode(numericValue);
 
-    if (numericValue.length === 6) {
-      // Simulate verification and navigate
-      setTimeout(() => {
-        onClose();
-        router.replace("/");
-      }, 500);
+    if (numericValue.length === 6 && onVerify) {
+      await onVerify(numericValue);
+    }
+  };
+
+  const handleVerifyPress = async () => {
+    if (code.length === 6 && onVerify) {
+      await onVerify(code);
+    }
+  };
+
+  const handleResend = async () => {
+    if (onResend) {
+      await onResend();
     }
   };
 
@@ -87,13 +105,13 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
               <Text className="text-2xl font-bold text-gray-800">
                 Check your email
               </Text>
-              <TouchableOpacity onPress={onClose}>
+              <TouchableOpacity onPress={onClose} disabled={isLoading}>
                 <Ionicons name="close" size={24} color="#6b7280" />
               </TouchableOpacity>
             </View>
 
             <Text className="text-gray-500 text-lg mb-8">
-              We've sent a 6-digit code to{"\n"}
+              We&apos;ve sent a 6-digit code to{"\n"}
               <Text className="font-bold text-gray-800">{email}</Text>
             </Text>
 
@@ -106,31 +124,49 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
               keyboardType="number-pad"
               style={{ opacity: 0, position: "absolute" }}
               caretHidden
+              editable={!isLoading}
             />
 
             {/* Digits Display */}
             <TouchableOpacity
               activeOpacity={1}
               onPress={() => inputRef.current?.focus()}
-              className="flex-row justify-between w-full mb-8"
+              className="flex-row justify-between w-full mb-2"
             >
               {[0, 1, 2, 3, 4, 5].map(renderDigit)}
             </TouchableOpacity>
 
+            {/* Error message */}
+            {error ? (
+              <Text className="text-red-500 text-sm text-center mt-2 mb-4">
+                {error}
+              </Text>
+            ) : (
+              <View className="mb-4" />
+            )}
+
             <TouchableOpacity
               activeOpacity={0.8}
-              className="bg-[#5D3FD3] h-14 rounded-2xl items-center justify-center shadow-lg shadow-purple-500/30"
-              onPress={() => {
-                if (code.length === 6) {
-                  onClose();
-                  router.replace("/");
-                }
-              }}
+              className={`h-14 rounded-2xl items-center justify-center shadow-lg shadow-purple-500/30 ${
+                isLoading || code.length < 6
+                  ? "bg-gray-300 shadow-none"
+                  : "bg-[#5D3FD3]"
+              }`}
+              onPress={handleVerifyPress}
+              disabled={isLoading || code.length < 6}
             >
-              <Text className="text-white font-bold text-lg">Verify</Text>
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text className="text-white font-bold text-lg">Verify</Text>
+              )}
             </TouchableOpacity>
 
-            <TouchableOpacity className="mt-6 self-center">
+            <TouchableOpacity
+              className="mt-6 self-center"
+              onPress={handleResend}
+              disabled={isLoading}
+            >
               <Text className="text-[#5D3FD3] font-bold text-base">
                 Resend Code
               </Text>
