@@ -9,22 +9,65 @@ import {
   Platform,
   StyleSheet,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Animated, { 
+  FadeIn, 
+  FadeInDown, 
+  SlideInDown,
+  useAnimatedStyle,
+  withSpring,
+  withSequence,
+  useSharedValue
+} from "react-native-reanimated";
+import { images } from "@/constants/images";
 
 interface VerificationModalProps {
   visible: boolean;
   onClose: () => void;
   email: string;
-  /** Called with the 6-digit code. Perform real Clerk verification here. */
   onVerify?: (code: string) => Promise<void>;
-  /** Called to resend the verification code. */
   onResend?: () => Promise<void>;
-  /** Loading state driven by the parent (e.g. while Clerk fetches) */
   isLoading?: boolean;
-  /** Error message to display under the OTP digits */
   error?: string;
 }
+
+const DigitBox = ({ digit, isFocused }: { digit: string; isFocused: boolean }) => {
+  const scale = useSharedValue(1);
+
+  useEffect(() => {
+    if (digit) {
+      scale.value = withSequence(
+        withSpring(1.1, { damping: 10, stiffness: 100 }),
+        withSpring(1)
+      );
+    }
+  }, [digit, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View
+      style={animatedStyle}
+      className={`w-[14%] h-16 border-2 rounded-2xl items-center justify-center bg-gray-50 shadow-sm ${
+        isFocused ? "border-[#5D3FD3] bg-white shadow-[#5D3FD3]/20" : "border-gray-100"
+      }`}
+    >
+      <Text className={`text-2xl font-bold ${isFocused ? "text-[#5D3FD3]" : "text-gray-800"}`}>
+        {digit}
+      </Text>
+      {isFocused && (
+        <Animated.View 
+          entering={FadeIn}
+          className="absolute bottom-3 w-4 h-0.5 bg-[#5D3FD3] rounded-full" 
+        />
+      )}
+    </Animated.View>
+  );
+};
 
 export const VerificationModal: React.FC<VerificationModalProps> = ({
   visible,
@@ -68,52 +111,69 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
     }
   };
 
-  const renderDigit = (index: number) => {
-    const digit = code[index] || "";
-    const isFocused = code.length === index;
-
-    return (
-      <View
-        key={index}
-        className={`w-12 h-14 border-2 rounded-xl items-center justify-center bg-gray-50 ${
-          isFocused ? "border-[#5D3FD3]" : "border-gray-200"
-        }`}
-      >
-        <Text className="text-2xl font-bold text-gray-800">{digit}</Text>
-      </View>
-    );
-  };
-
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
+        {visible && (
+          <Animated.View 
+            entering={FadeIn.duration(300)}
+            style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.6)" }]} 
+          >
+            <TouchableOpacity 
+              style={{ flex: 1 }} 
+              onPress={onClose} 
+              activeOpacity={1} 
+              disabled={isLoading}
+            />
+          </Animated.View>
+        )}
+
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
         >
-          <View className="bg-white rounded-t-[40px] px-8 pt-6 pb-12 w-full">
+          <Animated.View 
+            entering={SlideInDown.springify().damping(20).stiffness(90)}
+            className="bg-white rounded-t-[48px] px-8 pt-4 pb-12 w-full shadow-2xl"
+          >
             {/* Handle Bar */}
-            <View className="w-12 h-1.5 bg-gray-200 rounded-full self-center mb-6" />
+            <View className="w-12 h-1.5 bg-gray-100 rounded-full self-center mb-6" />
 
-            {/* Header */}
-            <View className="flex-row items-center justify-between mb-6">
-              <Text className="text-2xl font-bold text-gray-800">
-                Check your email
+            {/* Header Area with Mascot */}
+            <View className="items-center mb-6">
+              <Animated.View entering={FadeInDown.delay(200).springify()}>
+                <Image 
+                  source={images.mascotAuth} 
+                  className="w-24 h-24 mb-4" 
+                  resizeMode="contain" 
+                />
+              </Animated.View>
+              
+              <View className="absolute right-0 top-0">
+                <TouchableOpacity 
+                  onPress={onClose} 
+                  disabled={isLoading}
+                  className="w-10 h-10 items-center justify-center rounded-full bg-gray-50"
+                >
+                  <Ionicons name="close" size={24} color="#6b7280" />
+                </TouchableOpacity>
+              </View>
+
+              <Text className="text-3xl font-bold text-gray-900 text-center">
+                Check your inbox!
               </Text>
-              <TouchableOpacity onPress={onClose} disabled={isLoading}>
-                <Ionicons name="close" size={24} color="#6b7280" />
-              </TouchableOpacity>
+              <View className="mt-3 px-4">
+                <Text className="text-gray-500 text-center text-lg leading-6">
+                  We&apos;ve sent a special code to{"\n"}
+                  <Text className="font-bold text-[#5D3FD3]">{email}</Text>
+                </Text>
+              </View>
             </View>
-
-            <Text className="text-gray-500 text-lg mb-8">
-              We&apos;ve sent a 6-digit code to{"\n"}
-              <Text className="font-bold text-gray-800">{email}</Text>
-            </Text>
 
             {/* Hidden Input */}
             <TextInput
@@ -131,26 +191,35 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
             <TouchableOpacity
               activeOpacity={1}
               onPress={() => inputRef.current?.focus()}
-              className="flex-row justify-between w-full mb-2"
+              className="flex-row justify-between w-full mb-8"
             >
-              {[0, 1, 2, 3, 4, 5].map(renderDigit)}
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <DigitBox 
+                  key={i} 
+                  digit={code[i] || ""} 
+                  isFocused={code.length === i} 
+                />
+              ))}
             </TouchableOpacity>
 
-            {/* Error message */}
-            {error ? (
-              <Text className="text-red-500 text-sm text-center mt-2 mb-4">
-                {error}
-              </Text>
-            ) : (
-              <View className="mb-4" />
-            )}
+            {/* Error Message */}
+            <View className="h-6 mb-4">
+              {error && (
+                <Animated.Text 
+                  entering={FadeInDown}
+                  className="text-red-500 text-sm font-medium text-center"
+                >
+                  <Ionicons name="alert-circle" size={14} color="#ef4444" /> {error}
+                </Animated.Text>
+              )}
+            </View>
 
             <TouchableOpacity
-              activeOpacity={0.8}
-              className={`h-14 rounded-2xl items-center justify-center shadow-lg shadow-purple-500/30 ${
+              activeOpacity={0.9}
+              className={`h-16 rounded-2xl items-center justify-center shadow-xl ${
                 isLoading || code.length < 6
-                  ? "bg-gray-300 shadow-none"
-                  : "bg-[#5D3FD3]"
+                  ? "bg-gray-200"
+                  : "bg-[#5D3FD3] shadow-purple-500/40"
               }`}
               onPress={handleVerifyPress}
               disabled={isLoading || code.length < 6}
@@ -158,20 +227,22 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
               {isLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text className="text-white font-bold text-lg">Verify</Text>
+                <Text className="text-white font-bold text-xl">Verify & Continue</Text>
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity
-              className="mt-6 self-center"
-              onPress={handleResend}
-              disabled={isLoading}
-            >
-              <Text className="text-[#5D3FD3] font-bold text-base">
-                Resend Code
-              </Text>
-            </TouchableOpacity>
-          </View>
+            <View className="mt-8 flex-row justify-center items-center">
+              <Text className="text-gray-400 text-base">Didn&apos;t receive a code? </Text>
+              <TouchableOpacity
+                onPress={handleResend}
+                disabled={isLoading}
+              >
+                <Text className="text-[#5D3FD3] font-bold text-base">
+                  Resend it
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
         </KeyboardAvoidingView>
       </View>
     </Modal>
@@ -181,10 +252,10 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "flex-end",
   },
   keyboardView: {
     width: "100%",
   },
 });
+
