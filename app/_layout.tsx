@@ -1,6 +1,7 @@
 import { ClerkProvider, ClerkLoaded, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
 import { Slot } from "expo-router";
+import { PostHogProvider } from "posthog-react-native";
 import { ActivityIndicator, View } from "react-native";
 import "../global.css";
 
@@ -11,7 +12,7 @@ if (!publishableKey) {
 }
 
 function InitialLayout() {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded } = useAuth();
 
   if (!isLoaded) {
     return (
@@ -25,12 +26,28 @@ function InitialLayout() {
 }
 
 export default function RootLayout() {
-  return (
+  const posthogKey = process.env.EXPO_PUBLIC_POSTHOG_KEY;
+  const posthogHost = process.env.EXPO_PUBLIC_POSTHOG_HOST;
+
+  const content = (
     <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
       <ClerkLoaded>
         <InitialLayout />
       </ClerkLoaded>
     </ClerkProvider>
   );
+
+  if (posthogKey) {
+    return (
+      <PostHogProvider
+        apiKey={posthogKey}
+        options={posthogHost ? { host: posthogHost } : {}}
+      >
+        {content}
+      </PostHogProvider>
+    );
+  }
+
+  return content;
 }
 
