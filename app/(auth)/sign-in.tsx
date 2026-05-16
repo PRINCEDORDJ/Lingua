@@ -22,7 +22,6 @@ import { useSSO } from "@clerk/expo";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 
-WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -50,7 +49,7 @@ export default function SignInScreen() {
 
       if (status === "complete") {
         await setActive({ session: createdSessionId });
-        router.replace("/(tabs)");
+        // Let (auth)/_layout.tsx handle the redirect reactively
         return;
       }
 
@@ -95,7 +94,7 @@ export default function SignInScreen() {
       if (completeSignIn.status === "complete") {
         await setActive({ session: completeSignIn.createdSessionId });
         setModalVisible(false);
-        router.replace("/(tabs)");
+        // Let (auth)/_layout.tsx handle the redirect reactively
       } else {
         console.error(JSON.stringify(completeSignIn, null, 2));
       }
@@ -137,7 +136,7 @@ export default function SignInScreen() {
 
       if (createdSessionId) {
         await setSessionActive!({ session: createdSessionId });
-        router.replace("/(tabs)");
+        // Let (auth)/_layout.tsx handle the redirect reactively
       }
     } catch (err) {
       console.error(err);
