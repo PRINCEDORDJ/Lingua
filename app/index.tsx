@@ -1,12 +1,37 @@
-import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link, useRouter } from "expo-router";
+import { Link, Redirect, useRouter } from "expo-router";
 import { images } from "@/constants/images";
 import { Ionicons } from "@expo/vector-icons";
-
+import { useAuth } from "@clerk/expo";
 
 export default function Index() {
   const router = useRouter();
+  const { isSignedIn, isLoaded } = useAuth();
+
+  // Show loading state while Clerk resolves auth
+  if (!isLoaded) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#5D3FD3" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // If the user is already authenticated, redirect to the home tabs
+  if (isSignedIn) {
+    return <Redirect href={"/(tabs)/index"} />;
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View className="flex-1 px-6 pb-10">
@@ -47,7 +72,8 @@ export default function Index() {
             className="secondary-btn h-14 rounded-lg"
             onPress={() => {
               router.push("/(auth)/sign-in");
-            }}>
+            }}
+          >
             <Text className="text-white font-bold text-lg uppercase">
               I already have an account
             </Text>
@@ -62,6 +88,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
+  },
+  centered: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 
