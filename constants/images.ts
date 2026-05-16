@@ -8,6 +8,7 @@ import earth from "../assets/assets/images/earth.png";
 import palace from "../assets/assets/images/palace.png";
 import treasure from "../assets/assets/images/treasure.png";
 import streakFire from "../assets/assets/images/streak-fire.png";
+import unitHeroCafe from "../assets/assets/images/unit-hero-cafe.png";
 
 export const images = {
   icon,
@@ -20,4 +21,5 @@ export const images = {
   palace,
   treasure,
   streakFire,
+  unitHeroCafe,
 };

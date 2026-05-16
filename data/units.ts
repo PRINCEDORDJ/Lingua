@@ -7,7 +7,10 @@ export const units: Record<string, Unit[]> = {
       id: 'es-unit-1',
       languageId: 'es',
       title: 'Unit 1: Basics',
+      headerTitle: 'At the Café',
+      unitNumber: 3,
       description: 'Start your Spanish journey with common greetings and objects.',
+      imageUrl: 'unit_hero_cafe',
       lessons: lessons['es-unit-1'] || [],
     }
   ],
@@ -17,6 +20,7 @@ export const units: Record<string, Unit[]> = {
       languageId: 'fr',
       title: 'Unit 1: Foundations',
       description: 'Learn the essentials of French conversation.',
+      imageUrl: 'palace',
       lessons: lessons['fr-unit-1'] || [],
     }
   ],
@@ -26,6 +30,7 @@ export const units: Record<string, Unit[]> = {
       languageId: 'ja',
       title: 'Unit 1: Characters',
       description: 'Introduction to Japanese writing systems.',
+      imageUrl: 'palace',
       lessons: lessons['ja-unit-1'] || [],
     }
   ],
@@ -35,6 +40,7 @@ export const units: Record<string, Unit[]> = {
       languageId: 'en',
       title: 'Unit 1: Essentials',
       description: 'Basic survival English for travelers.',
+      imageUrl: 'palace',
       lessons: lessons['en-unit-1'] || [],
     }
   ],
@@ -44,6 +50,7 @@ export const units: Record<string, Unit[]> = {
       languageId: 'de',
       title: 'Unit 1: Grundlagen',
       description: 'Start your German journey with basics.',
+      imageUrl: 'palace',
       lessons: lessons['de-unit-1'] || [],
     }
   ],
@@ -53,6 +60,7 @@ export const units: Record<string, Unit[]> = {
       languageId: 'it',
       title: 'Unit 1: Fondamenta',
       description: 'Start your Italian journey with basics.',
+      imageUrl: 'palace',
       lessons: lessons['it-unit-1'] || [],
     }
   ]

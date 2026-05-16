@@ -8,6 +8,8 @@ interface UserState {
   setLanguage: (id: string) => void;
   xp: number;
   addXP: (amount: number) => void;
+  completedLessonIds: string[];
+  completeLesson: (lessonId: string, xpAmount: number) => void;
   clearStorage: () => Promise<void>;
 }
 
@@ -42,8 +44,16 @@ export const useUserStore = create<UserState>()(
       setLanguage: (id) => set({ selectedLanguageId: id }),
       xp: 0,
       addXP: (amount) => set((state) => ({ xp: state.xp + amount })),
+      completedLessonIds: [],
+      completeLesson: (lessonId, xpAmount) => set((state) => {
+        if (state.completedLessonIds.includes(lessonId)) return state;
+        return {
+          completedLessonIds: [...state.completedLessonIds, lessonId],
+          xp: state.xp + xpAmount
+        };
+      }),
       clearStorage: async () => {
-        set({ selectedLanguageId: null, xp: 0 });
+        set({ selectedLanguageId: null, xp: 0, completedLessonIds: [] });
         if (Platform.OS === 'web') {
           localStorage.removeItem('user-storage');
         } else {

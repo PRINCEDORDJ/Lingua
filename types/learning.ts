@@ -56,6 +56,8 @@ export interface Lesson {
   type: 'vocabulary' | 'grammar' | 'conversation' | 'review' | 'ai-lesson';
   xpReward: number;
   activities: Activity[];
+  imageKey?: string;
+  imageUrl?: string;
   vocabulary?: Vocabulary[];
   phrases?: Phrase[];
   goals?: LessonGoal[];
@@ -67,8 +69,14 @@ export interface Unit {
   languageId: string;
   title: string;
   description: string;
+  /** Shown in the learn screen header (e.g. "At the Café") */
+  headerTitle?: string;
+  unitNumber?: number;
+  imageUrl?: string;
   lessons: Lesson[];
 }
+
+export type LessonVisualStatus = 'completed' | 'in-progress' | 'available';
 
 export interface Language {
   id: string;

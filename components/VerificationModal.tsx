@@ -5,22 +5,24 @@ import {
   Modal,
   TouchableOpacity,
   TextInput,
-  KeyboardAvoidingView,
   Platform,
   StyleSheet,
   ActivityIndicator,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, { 
-  FadeIn, 
-  FadeInDown, 
+import Animated, {
+  FadeIn,
+  FadeInDown,
   SlideInDown,
   useAnimatedStyle,
   withSpring,
   withSequence,
-  useSharedValue
+  useSharedValue,
 } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { images } from "@/constants/images";
 
 interface VerificationModalProps {
@@ -52,7 +54,7 @@ const DigitBox = ({ digit, isFocused }: { digit: string; isFocused: boolean }) =
   return (
     <Animated.View
       style={animatedStyle}
-      className={`w-[14%] h-16 border-2 rounded-2xl items-center justify-center bg-gray-50 shadow-sm ${
+      className={`h-16 w-[14%] items-center justify-center rounded-2xl border-2 bg-gray-50 shadow-sm ${
         isFocused ? "border-[#5D3FD3] bg-white shadow-[#5D3FD3]/20" : "border-gray-100"
       }`}
     >
@@ -60,9 +62,9 @@ const DigitBox = ({ digit, isFocused }: { digit: string; isFocused: boolean }) =
         {digit}
       </Text>
       {isFocused && (
-        <Animated.View 
+        <Animated.View
           entering={FadeIn}
-          className="absolute bottom-3 w-4 h-0.5 bg-[#5D3FD3] rounded-full" 
+          className="absolute bottom-3 h-0.5 w-4 rounded-full bg-[#5D3FD3]"
         />
       )}
     </Animated.View>
@@ -80,6 +82,7 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
 }) => {
   const [code, setCode] = useState("");
   const inputRef = useRef<TextInput>(null);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (visible) {
@@ -87,8 +90,15 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
       setTimeout(() => {
         inputRef.current?.focus();
       }, 500);
+    } else {
+      Keyboard.dismiss();
     }
   }, [visible]);
+
+  const handleClose = () => {
+    Keyboard.dismiss();
+    onClose();
+  };
 
   const handleTextChange = async (text: string) => {
     if (isLoading) return;
@@ -118,98 +128,95 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
       visible={visible}
       transparent
       animationType="none"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
-      <View style={styles.modalOverlay}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.modalOverlay}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
         {visible && (
-          <Animated.View 
+          <Animated.View
             entering={FadeIn.duration(300)}
-            style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.6)" }]} 
+            style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.6)" }]}
           >
-            <TouchableOpacity 
-              style={{ flex: 1 }} 
-              onPress={onClose} 
-              activeOpacity={1} 
+            <TouchableOpacity
+              style={{ flex: 1 }}
+              onPress={handleClose}
+              activeOpacity={1}
               disabled={isLoading}
             />
           </Animated.View>
         )}
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardView}
-        >
-          <Animated.View 
+        <View style={styles.sheetContainer}>
+          <Animated.View
             entering={SlideInDown.springify().damping(20).stiffness(90)}
-            className="bg-white rounded-t-[48px] px-8 pt-4 pb-12 w-full shadow-2xl"
+            className="w-full rounded-t-[48px] bg-white px-8 pb-12 pt-4 shadow-2xl"
+            style={{ paddingBottom: Math.max(insets.bottom, 16) + 32 }}
           >
-            {/* Handle Bar */}
-            <View className="w-12 h-1.5 bg-gray-100 rounded-full self-center mb-6" />
+            <View className="mb-6 h-1.5 w-12 self-center rounded-full bg-gray-100" />
 
-            {/* Header Area with Mascot */}
-            <View className="items-center mb-6">
+            <View className="mb-6 items-center">
               <Animated.View entering={FadeInDown.delay(200).springify()}>
-                <Image 
-                  source={images.mascotAuth} 
-                  className="w-24 h-24 mb-4" 
-                  resizeMode="contain" 
+                <Image
+                  source={images.mascotAuth}
+                  className="mb-4 h-24 w-24"
+                  resizeMode="contain"
                 />
               </Animated.View>
-              
+
               <View className="absolute right-0 top-0">
-                <TouchableOpacity 
-                  onPress={onClose} 
+                <TouchableOpacity
+                  onPress={handleClose}
                   disabled={isLoading}
-                  className="w-10 h-10 items-center justify-center rounded-full bg-gray-50"
+                  className="h-10 w-10 items-center justify-center rounded-full bg-gray-50"
                 >
                   <Ionicons name="close" size={24} color="#6b7280" />
                 </TouchableOpacity>
               </View>
 
-              <Text className="text-3xl font-bold text-gray-900 text-center">
+              <Text className="text-center text-3xl font-bold text-gray-900">
                 Check your inbox!
               </Text>
               <View className="mt-3 px-4">
-                <Text className="text-gray-500 text-center text-lg leading-6">
+                <Text className="text-center text-lg leading-6 text-gray-500">
                   We&apos;ve sent a special code to{"\n"}
                   <Text className="font-bold text-[#5D3FD3]">{email}</Text>
                 </Text>
               </View>
             </View>
 
-            {/* Hidden Input */}
             <TextInput
               ref={inputRef}
               value={code}
               onChangeText={handleTextChange}
               maxLength={6}
               keyboardType="number-pad"
-              style={{ opacity: 0, position: "absolute" }}
+              style={styles.hiddenInput}
               caretHidden
               editable={!isLoading}
             />
 
-            {/* Digits Display */}
             <TouchableOpacity
               activeOpacity={1}
               onPress={() => inputRef.current?.focus()}
-              className="flex-row justify-between w-full mb-8"
+              className="mb-8 w-full flex-row justify-between"
             >
               {[0, 1, 2, 3, 4, 5].map((i) => (
-                <DigitBox 
-                  key={i} 
-                  digit={code[i] || ""} 
-                  isFocused={code.length === i} 
+                <DigitBox
+                  key={i}
+                  digit={code[i] || ""}
+                  isFocused={code.length === i}
                 />
               ))}
             </TouchableOpacity>
 
-            {/* Error Message */}
-            <View className="h-6 mb-4">
+            <View className="mb-4 h-6">
               {error && (
-                <Animated.Text 
+                <Animated.Text
                   entering={FadeInDown}
-                  className="text-red-500 text-sm font-medium text-center"
+                  className="text-center text-sm font-medium text-red-500"
                 >
                   <Ionicons name="alert-circle" size={14} color="#ef4444" /> {error}
                 </Animated.Text>
@@ -218,7 +225,7 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
 
             <TouchableOpacity
               activeOpacity={0.9}
-              className={`h-16 rounded-2xl items-center justify-center shadow-xl ${
+              className={`h-16 items-center justify-center rounded-2xl shadow-xl ${
                 isLoading || code.length < 6
                   ? "bg-gray-200"
                   : "bg-[#5D3FD3] shadow-purple-500/40"
@@ -229,24 +236,19 @@ export const VerificationModal: React.FC<VerificationModalProps> = ({
               {isLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text className="text-white font-bold text-xl">Verify & Continue</Text>
+                <Text className="text-xl font-bold text-white">Verify & Continue</Text>
               )}
             </TouchableOpacity>
 
-            <View className="mt-8 flex-row justify-center items-center">
-              <Text className="text-gray-400 text-base">Didn&apos;t receive a code? </Text>
-              <TouchableOpacity
-                onPress={handleResend}
-                disabled={isLoading}
-              >
-                <Text className="text-[#5D3FD3] font-bold text-base">
-                  Resend it
-                </Text>
+            <View className="mt-8 flex-row items-center justify-center">
+              <Text className="text-base text-gray-400">Didn&apos;t receive a code? </Text>
+              <TouchableOpacity onPress={handleResend} disabled={isLoading}>
+                <Text className="text-base font-bold text-[#5D3FD3]">Resend it</Text>
               </TouchableOpacity>
             </View>
           </Animated.View>
-        </KeyboardAvoidingView>
-      </View>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
@@ -256,8 +258,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-end",
   },
-  keyboardView: {
+  sheetContainer: {
     width: "100%",
   },
+  hiddenInput: {
+    opacity: 0,
+    position: "absolute",
+    height: 0,
+    width: 0,
+  },
 });
-

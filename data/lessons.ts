@@ -7,57 +7,24 @@ export const lessons: Record<string, Lesson[]> = {
       unitId: 'es-unit-1',
       title: 'Hola! Basics',
       description: 'Learn basic greetings and introductions in Spanish.',
-      type: 'vocabulary',
+      type: 'conversation', // Changed to conversation for AI teacher
       xpReward: 10,
-      activities: [
-        {
-          id: 'es-l1-a1',
-          type: 'multiple-choice',
-          question: 'How do you say "Hola" in Spanish?',
-          options: ['Hola', 'Adiós', 'Gracias', 'Por favor'],
-          correctAnswer: 'Hola',
-        },
-        {
-          id: 'es-l1-a2',
-          type: 'translation',
-          question: 'Translate: "Buenos días"',
-          correctAnswer: 'Good morning',
-        },
-        {
-          id: 'es-l1-a3',
-          type: 'listening',
-          question: 'Listen and select the correct word',
-          correctAnswer: 'Gracias',
-          audioUrl: 'https://example.com/audio/es/gracias.mp3',
-        }
-      ],
-      vocabulary: [
-        {
-          id: 'es-v1',
-          word: 'Hola',
-          translation: 'Hello',
-          phonetic: '/ˈola/',
-          exampleSentence: 'Hola, ¿cómo estás?',
-        },
-        {
-          id: 'es-v2',
-          word: 'Gracias',
-          translation: 'Thank you',
-          phonetic: '/ˈɡɾasjas/',
-        }
-      ],
+      activities: [],
       goals: [
-        { id: 'es-g1', description: 'Master basic greetings' },
-        { id: 'es-g2', description: 'Learn to say thank you' }
+        { id: 'g1', description: 'Introduce yourself' },
+        { id: 'g2', description: 'Say hello and goodbye' }
+      ],
+      phrases: [
+        { id: 'p1', text: 'Hola, ¿cómo estás?', translation: 'Hello, how are you?' },
+        { id: 'p2', text: 'Mucho gusto', translation: 'Nice to meet you' }
       ],
       aiTeacherPrompt: {
-        id: 'es-ai-p1',
-        context: 'A student is learning basic greetings for the first time.',
-        instructions: 'Encourage the student to practice "Hola" and "Buenos días". Use a friendly, upbeat tone.',
+        id: 'tp1',
+        context: 'You are a friendly Spanish teacher helping a beginner student with basic greetings.',
+        instructions: 'Start by saying hello and asking the student how they are.',
         sampleDialogues: [
-          { role: 'teacher', text: '¡Hola! Bienvenido a tu primera clase de español.' },
-          { role: 'student', text: 'Hola, teacher!' },
-          { role: 'teacher', text: 'Excelente. Ahora intenta decir: Buenos días.' }
+          { role: 'teacher', text: '¡Muy bien!' },
+          { role: 'student', text: 'Hola, estoy bien, gracias. ¿Y tú?' }
         ]
       }
     },
@@ -68,39 +35,78 @@ export const lessons: Record<string, Lesson[]> = {
       description: 'Learn the names of everyday items in Spanish.',
       type: 'vocabulary',
       xpReward: 15,
-      activities: [
-        {
-          id: 'es-l2-a1',
-          type: 'matching',
-          question: 'Match the object to its Spanish name',
-          options: ['Libro - Book', 'Mesa - Table', 'Silla - Chair'],
-          correctAnswer: 'Libro - Book, Mesa - Table, Silla - Chair',
-        }
+      activities: [],
+      goals: [
+        { id: 'es-l2-g1', description: 'Name common everyday objects' },
+        { id: 'es-l2-g2', description: 'Use object words in short sentences' },
       ],
-      vocabulary: [
-        { id: 'es-v3', word: 'Libro', translation: 'Book' },
-        { id: 'es-v4', word: 'Mesa', translation: 'Table' }
-      ]
+      phrases: [
+        { id: 'es-l2-p1', text: 'La mesa', translation: 'The table' },
+        { id: 'es-l2-p2', text: 'La silla', translation: 'The chair' },
+      ],
+      aiTeacherPrompt: {
+        id: 'es-l2-tp',
+        context: 'You are a friendly Spanish teacher helping a beginner learn everyday object names.',
+        instructions: 'Introduce 2–3 common objects and ask the student to repeat them.',
+        sampleDialogues: [
+          { role: 'teacher', text: '¡Muy bien!' },
+          { role: 'student', text: 'La mesa, la silla.' },
+        ],
+      },
     },
     {
       id: 'es-l3',
       unitId: 'es-unit-1',
-      title: 'Family Members',
-      description: 'Learn the words for family members in Spanish.',
+      title: 'At the Café',
+      description: 'Order your favorite drinks and snacks.',
+      type: 'conversation',
+      xpReward: 20,
+      imageUrl: 'https://picsum.photos/seed/es-cafe/96/96',
+      activities: [],
+      goals: [
+        { id: 'es-l3-g1', description: 'Order a drink at a café' },
+        { id: 'es-l3-g2', description: 'Ask for the bill politely' },
+      ],
+      phrases: [
+        { id: 'es-l3-p1', text: 'Un café, por favor', translation: 'A coffee, please' },
+        { id: 'es-l3-p2', text: 'La cuenta, por favor', translation: 'The bill, please' },
+      ],
+      aiTeacherPrompt: {
+        id: 'es-l3-tp',
+        context: 'You are a friendly Spanish teacher in a café role-play helping the student order drinks.',
+        instructions: 'Role-play as a barista and guide the student to order a drink.',
+        sampleDialogues: [
+          { role: 'teacher', text: '¡Muy bien!' },
+          { role: 'student', text: 'Un café, por favor.' },
+        ],
+      },
+    },
+    {
+      id: 'es-l4',
+      unitId: 'es-unit-1',
+      title: 'Travel & Directions',
+      description: 'Navigate your way through a new city.',
       type: 'vocabulary',
       xpReward: 15,
-      activities: [
-        {
-          id: 'es-l3-a1',
-          type: 'translation',
-          question: 'Translate: "La madre"',
-          correctAnswer: 'The mother',
-        }
-      ],
-      vocabulary: [
-        { id: 'es-v5', word: 'Madre', translation: 'Mother' },
-        { id: 'es-v6', word: 'Padre', translation: 'Father' }
-      ]
+      activities: [],
+    },
+    {
+      id: 'es-l5',
+      unitId: 'es-unit-1',
+      title: 'Shopping',
+      description: 'Learn how to ask for prices and buy things.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
+    },
+    {
+      id: 'es-l6',
+      unitId: 'es-unit-1',
+      title: 'Family & Friends',
+      description: 'Talk about the people in your life.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
     }
   ],
   'fr-unit-1': [
@@ -111,27 +117,7 @@ export const lessons: Record<string, Lesson[]> = {
       description: 'Learn basic greetings in French.',
       type: 'vocabulary',
       xpReward: 10,
-      activities: [
-        {
-          id: 'fr-l1-a1',
-          type: 'multiple-choice',
-          question: 'How do you say "Hello" in French?',
-          options: ['Bonjour', 'Salut', 'Au revoir', 'Merci'],
-          correctAnswer: 'Bonjour',
-        }
-      ],
-      vocabulary: [
-        { id: 'fr-v1', word: 'Bonjour', translation: 'Hello/Good day', phonetic: '/bɔ̃ʒuʁ/' }
-      ],
-      aiTeacherPrompt: {
-        id: 'fr-ai-p1',
-        context: 'A student is learning French greetings.',
-        instructions: 'Focus on the pronunciation of "Bonjour". Be encouraging.',
-        sampleDialogues: [
-          { role: 'teacher', text: 'Bonjour ! Comment ça va ?' },
-          { role: 'student', text: 'Bonjour ! Ça va bien.' }
-        ]
-      }
+      activities: [],
     },
     {
       id: 'fr-l2',
@@ -140,19 +126,60 @@ export const lessons: Record<string, Lesson[]> = {
       description: 'Learn basic colors in French.',
       type: 'vocabulary',
       xpReward: 12,
-      activities: [
-        {
-          id: 'fr-l2-a1',
-          type: 'multiple-choice',
-          question: 'What color is "Bleu"?',
-          options: ['Blue', 'Red', 'Green', 'Yellow'],
-          correctAnswer: 'Blue',
-        }
+      activities: [],
+    },
+    {
+      id: 'fr-l3',
+      unitId: 'fr-unit-1',
+      title: 'At the Bistro',
+      description: 'Ordering food and drinks in French.',
+      type: 'conversation',
+      xpReward: 20,
+      activities: [],
+      goals: [
+        { id: 'fr-l3-g1', description: 'Order food at a bistro' },
+        { id: 'fr-l3-g2', description: 'Ask for the menu in French' },
       ],
-      vocabulary: [
-        { id: 'fr-v2', word: 'Bleu', translation: 'Blue' },
-        { id: 'fr-v3', word: 'Rouge', translation: 'Red' }
-      ]
+      phrases: [
+        { id: 'fr-l3-p1', text: 'Un café, s\'il vous plaît', translation: 'A coffee, please' },
+        { id: 'fr-l3-p2', text: 'L\'addition, s\'il vous plaît', translation: 'The bill, please' },
+      ],
+      aiTeacherPrompt: {
+        id: 'fr-l3-tp',
+        context: 'You are a friendly French teacher in a bistro role-play.',
+        instructions: 'Help the student order a drink politely.',
+        sampleDialogues: [
+          { role: 'teacher', text: 'Très bien !' },
+          { role: 'student', text: 'Un café, s\'il vous plaît.' },
+        ],
+      },
+    },
+    {
+      id: 'fr-l4',
+      unitId: 'fr-unit-1',
+      title: 'The City',
+      description: 'Naming places in a French town.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
+    },
+    {
+      id: 'fr-l5',
+      unitId: 'fr-unit-1',
+      title: 'My House',
+      description: 'Describing your living space.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
+    },
+    {
+      id: 'fr-l6',
+      unitId: 'fr-unit-1',
+      title: 'Hobbies',
+      description: 'Talking about what you love to do.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
     }
   ],
   'ja-unit-1': [
@@ -163,19 +190,7 @@ export const lessons: Record<string, Lesson[]> = {
       description: 'Learn the first few Hiragana characters.',
       type: 'vocabulary',
       xpReward: 10,
-      activities: [
-        {
-          id: 'ja-l1-a1',
-          type: 'multiple-choice',
-          question: 'Which character is "a"?',
-          options: ['あ', 'い', 'う', 'え'],
-          correctAnswer: 'あ',
-        }
-      ],
-      vocabulary: [
-        { id: 'ja-v1', word: 'あ (a)', translation: 'a' },
-        { id: 'ja-v2', word: 'い (i)', translation: 'i' }
-      ]
+      activities: [],
     },
     {
       id: 'ja-l2',
@@ -184,18 +199,60 @@ export const lessons: Record<string, Lesson[]> = {
       description: 'Learn how to say hello and goodbye in Japanese.',
       type: 'vocabulary',
       xpReward: 15,
-      activities: [
-        {
-          id: 'ja-l2-a1',
-          type: 'translation',
-          question: 'Translate: "こんにちは"',
-          correctAnswer: 'Hello',
-        }
+      activities: [],
+    },
+    {
+      id: 'ja-l3',
+      unitId: 'ja-unit-1',
+      title: 'At the Sushi Bar',
+      description: 'Ordering sushi in Japanese.',
+      type: 'conversation',
+      xpReward: 20,
+      activities: [],
+      goals: [
+        { id: 'ja-l3-g1', description: 'Order sushi politely' },
+        { id: 'ja-l3-g2', description: 'Thank the chef in Japanese' },
       ],
-      vocabulary: [
-        { id: 'ja-v3', word: 'こんにちは (Konnichiwa)', translation: 'Hello' },
-        { id: 'ja-v4', word: 'さようなら (Sayounara)', translation: 'Goodbye' }
-      ]
+      phrases: [
+        { id: 'ja-l3-p1', text: 'すしをください', translation: 'Sushi, please' },
+        { id: 'ja-l3-p2', text: 'ありがとうございます', translation: 'Thank you very much' },
+      ],
+      aiTeacherPrompt: {
+        id: 'ja-l3-tp',
+        context: 'You are a friendly Japanese teacher at a sushi bar.',
+        instructions: 'Guide the student to order sushi.',
+        sampleDialogues: [
+          { role: 'teacher', text: 'よくできました！' },
+          { role: 'student', text: 'すしをください。' },
+        ],
+      },
+    },
+    {
+      id: 'ja-l4',
+      unitId: 'ja-unit-1',
+      title: 'Katakana Intro',
+      description: 'Learn the Katakana alphabet.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
+    },
+    {
+      id: 'ja-l5',
+      unitId: 'ja-unit-1',
+      title: 'Numbers 1-100',
+      description: 'Counting in Japanese.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
+    },
+    {
+      id: 'ja-l6',
+      unitId: 'ja-unit-1',
+      title: 'Daily Routine',
+      description: 'Talking about your day.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
     }
   ],
   'en-unit-1': [
@@ -206,18 +263,7 @@ export const lessons: Record<string, Lesson[]> = {
       description: 'Master the most common English greetings.',
       type: 'vocabulary',
       xpReward: 10,
-      activities: [
-        {
-          id: 'en-l1-a1',
-          type: 'multiple-choice',
-          question: 'How do you say "Hola" in English?',
-          options: ['Hello', 'Goodbye', 'Please', 'Thanks'],
-          correctAnswer: 'Hello',
-        }
-      ],
-      vocabulary: [
-        { id: 'en-v1', word: 'Hello', translation: 'Hola' }
-      ]
+      activities: [],
     },
     {
       id: 'en-l2',
@@ -226,19 +272,60 @@ export const lessons: Record<string, Lesson[]> = {
       description: 'Learn to count in English.',
       type: 'vocabulary',
       xpReward: 12,
-      activities: [
-        {
-          id: 'en-l2-a1',
-          type: 'multiple-choice',
-          question: 'What is the number "Five"?',
-          options: ['5', '3', '8', '10'],
-          correctAnswer: '5',
-        }
+      activities: [],
+    },
+    {
+      id: 'en-l3',
+      unitId: 'en-unit-1',
+      title: 'At the Airport',
+      description: 'Travel vocabulary for your flight.',
+      type: 'conversation',
+      xpReward: 20,
+      activities: [],
+      goals: [
+        { id: 'en-l3-g1', description: 'Check in for a flight' },
+        { id: 'en-l3-g2', description: 'Ask where the gate is' },
       ],
-      vocabulary: [
-        { id: 'en-v2', word: 'One', translation: 'Uno' },
-        { id: 'en-v3', word: 'Two', translation: 'Dos' }
-      ]
+      phrases: [
+        { id: 'en-l3-p1', text: 'Where is gate 12?', translation: 'Where is gate 12?' },
+        { id: 'en-l3-p2', text: 'I have one bag', translation: 'I have one bag' },
+      ],
+      aiTeacherPrompt: {
+        id: 'en-l3-tp',
+        context: 'You are a friendly English teacher helping with airport travel phrases.',
+        instructions: 'Role-play an airport check-in conversation.',
+        sampleDialogues: [
+          { role: 'teacher', text: 'Great job!' },
+          { role: 'student', text: 'Where is gate 12?' },
+        ],
+      },
+    },
+    {
+      id: 'en-l4',
+      unitId: 'en-unit-1',
+      title: 'Food & Drink',
+      description: 'Basic items you can eat and drink.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
+    },
+    {
+      id: 'en-l5',
+      unitId: 'en-unit-1',
+      title: 'Clothes',
+      description: 'Describing what people wear.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
+    },
+    {
+      id: 'en-l6',
+      unitId: 'en-unit-1',
+      title: 'Colors',
+      description: 'Naming colors in English.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
     }
   ],
   'de-unit-1': [
@@ -249,18 +336,69 @@ export const lessons: Record<string, Lesson[]> = {
       description: 'Learn basic German greetings.',
       type: 'vocabulary',
       xpReward: 10,
-      activities: [
-        {
-          id: 'de-l1-a1',
-          type: 'multiple-choice',
-          question: 'How do you say "Hello" in German?',
-          options: ['Hallo', 'Tschüss', 'Danke', 'Bitte'],
-          correctAnswer: 'Hallo',
-        }
+      activities: [],
+    },
+    {
+      id: 'de-l2',
+      unitId: 'de-unit-1',
+      title: 'German Numbers',
+      description: 'Count 1-10 in German.',
+      type: 'vocabulary',
+      xpReward: 12,
+      activities: [],
+    },
+    {
+      id: 'de-l3',
+      unitId: 'de-unit-1',
+      title: 'At the Bakery',
+      description: 'Order bread and pastries in German.',
+      type: 'conversation',
+      xpReward: 20,
+      activities: [],
+      goals: [
+        { id: 'de-l3-g1', description: 'Order bread at a bakery' },
+        { id: 'de-l3-g2', description: 'Say thank you in German' },
       ],
-      vocabulary: [
-        { id: 'de-v1', word: 'Hallo', translation: 'Hello' }
-      ]
+      phrases: [
+        { id: 'de-l3-p1', text: 'Ein Brot, bitte', translation: 'One bread, please' },
+        { id: 'de-l3-p2', text: 'Danke schön', translation: 'Thank you very much' },
+      ],
+      aiTeacherPrompt: {
+        id: 'de-l3-tp',
+        context: 'You are a friendly German teacher at a bakery.',
+        instructions: 'Help the student order bread.',
+        sampleDialogues: [
+          { role: 'teacher', text: 'Sehr gut!' },
+          { role: 'student', text: 'Ein Brot, bitte.' },
+        ],
+      },
+    },
+    {
+      id: 'de-l4',
+      unitId: 'de-unit-1',
+      title: 'My Family',
+      description: 'German family vocabulary.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
+    },
+    {
+      id: 'de-l5',
+      unitId: 'de-unit-1',
+      title: 'Animals',
+      description: 'Common German animal names.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
+    },
+    {
+      id: 'de-l6',
+      unitId: 'de-unit-1',
+      title: 'The Weather',
+      description: 'Talk about the rain and sun.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
     }
   ],
   'it-unit-1': [
@@ -271,18 +409,69 @@ export const lessons: Record<string, Lesson[]> = {
       description: 'Learn basic Italian greetings.',
       type: 'vocabulary',
       xpReward: 10,
-      activities: [
-        {
-          id: 'it-l1-a1',
-          type: 'multiple-choice',
-          question: 'How do you say "Hello" in Italian?',
-          options: ['Ciao', 'Arrivederci', 'Grazie', 'Prego'],
-          correctAnswer: 'Ciao',
-        }
+      activities: [],
+    },
+    {
+      id: 'it-l2',
+      unitId: 'it-unit-1',
+      title: 'Numbers & Time',
+      description: 'Count and tell time in Italian.',
+      type: 'vocabulary',
+      xpReward: 12,
+      activities: [],
+    },
+    {
+      id: 'it-l3',
+      unitId: 'it-unit-1',
+      title: 'At the Pizzeria',
+      description: 'Ordering pizza in Italian.',
+      type: 'conversation',
+      xpReward: 20,
+      activities: [],
+      goals: [
+        { id: 'it-l3-g1', description: 'Order pizza in Italian' },
+        { id: 'it-l3-g2', description: 'Ask for the bill' },
       ],
-      vocabulary: [
-        { id: 'it-v1', word: 'Ciao', translation: 'Hello/Hi' }
-      ]
+      phrases: [
+        { id: 'it-l3-p1', text: 'Una pizza, per favore', translation: 'A pizza, please' },
+        { id: 'it-l3-p2', text: 'Il conto, per favore', translation: 'The bill, please' },
+      ],
+      aiTeacherPrompt: {
+        id: 'it-l3-tp',
+        context: 'You are a friendly Italian teacher at a pizzeria.',
+        instructions: 'Guide the student to order pizza.',
+        sampleDialogues: [
+          { role: 'teacher', text: 'Molto bene!' },
+          { role: 'student', text: 'Una pizza, per favore.' },
+        ],
+      },
+    },
+    {
+      id: 'it-l4',
+      unitId: 'it-unit-1',
+      title: 'Italian Food',
+      description: 'Common Italian food items.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
+    },
+    {
+      id: 'it-l5',
+      unitId: 'it-unit-1',
+      title: 'Fashion',
+      description: 'Talk about Italian style.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
+    },
+    {
+      id: 'it-l6',
+      unitId: 'it-unit-1',
+      title: 'Music',
+      description: 'Italian music vocabulary.',
+      type: 'vocabulary',
+      xpReward: 15,
+      activities: [],
     }
   ]
 };
