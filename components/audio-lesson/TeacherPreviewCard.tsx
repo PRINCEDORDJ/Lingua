@@ -72,6 +72,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(45, 45, 45, 0.55)',
   },
   teacherImage: {
+    marginTop: 120,
     width: '48%',
     height: '70%',
     maxHeight: 200,

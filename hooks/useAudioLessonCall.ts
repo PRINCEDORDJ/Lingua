@@ -1,11 +1,7 @@
 import { useAuth } from '@clerk/expo';
-import {
-  StreamVideoClient,
-  type Call,
-  type User,
-} from '@stream-io/video-react-native-sdk';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createLessonCall, fetchStreamCredentials } from '@/lib/stream/api';
+import { isExpoGo, loadStreamSdk } from '@/lib/stream/loadStreamSdk';
 import type { AudioCallStatus } from '@/types/stream';
 
 interface UseAudioLessonCallParams {
@@ -20,12 +16,16 @@ interface UseAudioLessonCallResult {
   status: AudioCallStatus;
   errorMessage: string | null;
   micMuted: boolean;
-  client: StreamVideoClient | null;
-  call: Call | null;
+  streamAvailable: boolean;
+  client: unknown;
+  call: unknown;
   toggleMic: () => Promise<void>;
   endCall: () => Promise<void>;
   retry: () => void;
 }
+
+const EXPO_GO_MESSAGE =
+  'Live audio calls need a development build. Run npx expo run:android (or :ios). You can still use the lesson UI in Expo Go.';
 
 export function useAudioLessonCall({
   lessonId,
@@ -38,12 +38,14 @@ export function useAudioLessonCall({
   const [status, setStatus] = useState<AudioCallStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [micMuted, setMicMuted] = useState(false);
-  const [client, setClient] = useState<StreamVideoClient | null>(null);
-  const [call, setCall] = useState<Call | null>(null);
+  const [streamAvailable, setStreamAvailable] = useState(false);
+  const [client, setClient] = useState<unknown>(null);
+  const [call, setCall] = useState<unknown>(null);
   const [retryKey, setRetryKey] = useState(0);
 
-  const callRef = useRef<Call | null>(null);
-  const clientRef = useRef<StreamVideoClient | null>(null);
+  const callRef = useRef<unknown>(null);
+  const clientRef = useRef<unknown>(null);
+  const previewMicRef = useRef(false);
 
   const retry = useCallback(() => {
     setErrorMessage(null);
@@ -56,9 +58,28 @@ export function useAudioLessonCall({
       return;
     }
 
+    if (isExpoGo()) {
+      setStreamAvailable(false);
+      setStatus('idle');
+      setErrorMessage(null);
+      return;
+    }
+
     let mounted = true;
-    let activeCall: Call | null = null;
-    let activeClient: StreamVideoClient | null = null;
+    type LessonCall = {
+      join: () => Promise<void>;
+      leave: () => Promise<void>;
+      camera: { disable: () => Promise<void> };
+      microphone: { enable: () => Promise<void>; disable: () => Promise<void> };
+    };
+
+    type StreamClientInstance = {
+      call: (type: string, id: string) => LessonCall;
+      disconnectUser: () => Promise<void>;
+    };
+
+    let activeCall: LessonCall | null = null;
+    let activeClient: StreamClientInstance | null = null;
 
     const timer = setTimeout(async () => {
       if (!mounted) {
@@ -68,6 +89,17 @@ export function useAudioLessonCall({
       try {
         setStatus('loading');
         setErrorMessage(null);
+
+        const sdk = await loadStreamSdk();
+        if (!sdk) {
+          if (!mounted) return;
+          setStreamAvailable(false);
+          setStatus('error');
+          setErrorMessage(EXPO_GO_MESSAGE);
+          return;
+        }
+
+        setStreamAvailable(true);
 
         const getClerkToken = () => getToken();
         const credentials = await fetchStreamCredentials(getClerkToken, {
@@ -88,7 +120,7 @@ export function useAudioLessonCall({
           return;
         }
 
-        const streamUser: User = {
+        const streamUser = {
           id: credentials.userId,
           name: userName ?? undefined,
           image: userImageUrl ?? undefined,
@@ -102,14 +134,15 @@ export function useAudioLessonCall({
           return refreshed.token;
         };
 
-        activeClient = StreamVideoClient.getOrCreateInstance({
+        activeClient = sdk.StreamVideoClient.getOrCreateInstance({
           apiKey: credentials.apiKey,
           user: streamUser,
           token: credentials.token,
           tokenProvider,
-        });
+        }) as StreamClientInstance;
 
         activeCall = activeClient.call(lessonCall.callType, lessonCall.callId);
+
         callRef.current = activeCall;
         clientRef.current = activeClient;
 
@@ -158,8 +191,12 @@ export function useAudioLessonCall({
       clearTimeout(timer);
 
       const cleanup = async () => {
-        const currentCall = callRef.current;
-        const currentClient = clientRef.current;
+        const currentCall = callRef.current as {
+          leave: () => Promise<void>;
+        } | null;
+        const currentClient = clientRef.current as {
+          disconnectUser: () => Promise<void>;
+        } | null;
 
         callRef.current = null;
         clientRef.current = null;
@@ -186,48 +223,61 @@ export function useAudioLessonCall({
   ]);
 
   const toggleMic = useCallback(async () => {
-    const activeCall = callRef.current;
-    if (!activeCall || status !== 'joined') {
+    const activeCall = callRef.current as {
+      microphone: { enable: () => Promise<void>; disable: () => Promise<void> };
+    } | null;
+
+    if (activeCall && status === 'joined') {
+      if (micMuted) {
+        await activeCall.microphone.enable();
+        setMicMuted(false);
+      } else {
+        await activeCall.microphone.disable();
+        setMicMuted(true);
+      }
       return;
     }
 
-    if (micMuted) {
-      await activeCall.microphone.enable();
-      setMicMuted(false);
-    } else {
-      await activeCall.microphone.disable();
-      setMicMuted(true);
-    }
+    previewMicRef.current = !previewMicRef.current;
+    setMicMuted(previewMicRef.current);
   }, [micMuted, status]);
 
   const endCall = useCallback(async () => {
-    const activeCall = callRef.current;
-    const activeClient = clientRef.current;
+    const activeCall = callRef.current as { leave: () => Promise<void> } | null;
+    const activeClient = clientRef.current as {
+      disconnectUser: () => Promise<void>;
+    } | null;
 
-    setStatus('ended');
+    if (activeCall || activeClient) {
+      setStatus('ended');
 
-    if (activeCall) {
-      try {
-        await activeCall.leave();
-      } catch {
-        // ignore leave errors during teardown
+      if (activeCall) {
+        try {
+          await activeCall.leave();
+        } catch {
+          // ignore leave errors during teardown
+        }
       }
+
+      if (activeClient) {
+        await activeClient.disconnectUser().catch(() => undefined);
+      }
+
+      callRef.current = null;
+      clientRef.current = null;
+      setCall(null);
+      setClient(null);
     }
 
-    if (activeClient) {
-      await activeClient.disconnectUser().catch(() => undefined);
-    }
-
-    callRef.current = null;
-    clientRef.current = null;
-    setCall(null);
-    setClient(null);
+    previewMicRef.current = false;
+    setMicMuted(false);
   }, []);
 
   return {
     status,
-    errorMessage,
+    errorMessage: isExpoGo() ? null : errorMessage,
     micMuted,
+    streamAvailable,
     client,
     call,
     toggleMic,

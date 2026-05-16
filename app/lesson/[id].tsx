@@ -3,12 +3,9 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUser } from '@clerk/expo';
-import {
-  StreamCall,
-  StreamVideo,
-} from '@stream-io/video-react-native-sdk';
 import { useUserStore } from '@/store/useUserStore';
 import { getLessonContext, getTeacherBubbleLines } from '@/lib/lessonContext';
+import { isExpoGo } from '@/lib/stream/loadStreamSdk';
 import {
   getTeacherImage,
   getPreviewBackgroundImage,
@@ -21,6 +18,7 @@ import { AudioCallControls } from '@/components/audio-lesson/AudioCallControls';
 import { LessonFeedbackMetrics } from '@/components/audio-lesson/LessonFeedbackMetrics';
 import { LessonSubtitlesPanel } from '@/components/audio-lesson/LessonSubtitlesPanel';
 import { AudioSessionStatus } from '@/components/audio-lesson/AudioSessionStatus';
+import { StreamCallProvider } from '@/components/audio-lesson/StreamCallProvider';
 
 export default function LessonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -45,6 +43,7 @@ export default function LessonScreen() {
     status,
     errorMessage,
     micMuted,
+    streamAvailable,
     client,
     call,
     toggleMic,
@@ -93,8 +92,10 @@ export default function LessonScreen() {
 
   const { lesson, language } = context;
   const userSeed = user?.id ?? lesson.id;
-  const controlsDisabled = status !== 'joined';
+  const inPreviewMode = isExpoGo() || !streamAvailable;
+  const controlsDisabled = !inPreviewMode && status !== 'joined';
   const isBusy = status === 'loading' || status === 'connecting';
+  const headerStatus = inPreviewMode && status === 'idle' ? 'joined' : status;
 
   const lessonBody = (
     <ScrollView
@@ -104,18 +105,28 @@ export default function LessonScreen() {
     >
       <AudioLessonHeader
         onBack={handleEndCall}
-        callStatus={status}
+        callStatus={headerStatus}
         micMuted={micMuted}
       />
 
-      <AudioSessionStatus
-        status={status}
-        languageName={language.name}
-        userName={user?.fullName ?? user?.firstName}
-        errorMessage={errorMessage}
-        micMuted={micMuted}
-        onRetry={retry}
-      />
+      {isExpoGo() ? (
+        <View className="mx-4 mt-2 rounded-2xl border border-yellow bg-yellow/10 px-4 py-3">
+          <Text className="body-sm text-neutral-dark">
+            Preview mode: live audio needs a dev build (`npx expo run:android`).
+          </Text>
+        </View>
+      ) : null}
+
+      {!inPreviewMode ? (
+        <AudioSessionStatus
+          status={status}
+          languageName={language.name}
+          userName={user?.fullName ?? user?.firstName}
+          errorMessage={errorMessage}
+          micMuted={micMuted}
+          onRetry={retry}
+        />
+      ) : null}
 
       {isBusy ? (
         <View className="items-center py-6">
@@ -156,13 +167,9 @@ export default function LessonScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      {client && call ? (
-        <StreamVideo client={client}>
-          <StreamCall call={call}>{lessonBody}</StreamCall>
-        </StreamVideo>
-      ) : (
-        lessonBody
-      )}
+      <StreamCallProvider client={client} call={call}>
+        {lessonBody}
+      </StreamCallProvider>
     </SafeAreaView>
   );
 }
