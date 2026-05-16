@@ -1,11 +1,12 @@
 import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { images } from "@/constants/images";
 import { Ionicons } from "@expo/vector-icons";
 
 
 export default function Index() {
+  const router = useRouter();
   return (
     <SafeAreaView style={styles.container}>
       <View className="flex-1 px-6 pb-10">
@@ -45,8 +46,7 @@ export default function Index() {
           <TouchableOpacity
             className="secondary-btn h-14 rounded-lg"
             onPress={() => {
-              // Handle login navigation or modal
-              console.log("Login pressed");
+              router.push("/(auth)/sign-in");
             }}>
             <Text className="text-white font-bold text-lg uppercase">
               I already have an account
