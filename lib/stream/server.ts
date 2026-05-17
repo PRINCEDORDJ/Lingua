@@ -148,6 +148,9 @@ export async function getOrCreateLessonCall(params: {
         video: {
           camera_default_on: false,
         },
+        transcription: {
+          closed_caption_mode: 'auto-on',
+        },
       },
     },
   });

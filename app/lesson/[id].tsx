@@ -196,7 +196,7 @@ export default function LessonScreen() {
         backgroundImage={getPreviewBackgroundImage()}
       />
 
-      {!inPreviewMode && status === 'joined' ? <LessonLiveCaptionsPanel /> : null}
+      {(!inPreviewMode && status === 'joined') || isExpoGo() ? <LessonLiveCaptionsPanel /> : null}
 
       <AudioMicButton
         isSpeaking={isSpeaking}
