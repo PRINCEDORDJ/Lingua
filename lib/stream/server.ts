@@ -143,7 +143,7 @@ export async function getOrCreateLessonCall(params: {
       settings_override: {
         audio: {
           default_device: 'speaker',
-          mic_default_on: true,
+          mic_default_on: false,
         },
         video: {
           camera_default_on: false,

@@ -1,23 +1,18 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUser } from '@clerk/expo';
 import { posthog } from '@/lib/posthog';
 import { useUserStore } from '@/store/useUserStore';
-import { getLessonContext, getTeacherBubbleLines } from '@/lib/lessonContext';
+import { getLessonContext } from '@/lib/lessonContext';
 import { isExpoGo } from '@/lib/stream/loadStreamSdk';
-import {
-  getTeacherImage,
-  getPreviewBackgroundImage,
-  getUserInsetImage,
-} from '@/lib/audioLessonImages';
+import { getTeacherImage, getPreviewBackgroundImage } from '@/lib/audioLessonImages';
 import { useAudioLessonCall } from '@/hooks/useAudioLessonCall';
 import { AudioLessonHeader } from '@/components/audio-lesson/AudioLessonHeader';
 import { TeacherPreviewCard } from '@/components/audio-lesson/TeacherPreviewCard';
-import { AudioCallControls } from '@/components/audio-lesson/AudioCallControls';
+import { AudioMicButton } from '@/components/audio-lesson/AudioMicButton';
 import { LessonFeedbackMetrics } from '@/components/audio-lesson/LessonFeedbackMetrics';
-import { LessonSubtitlesPanel } from '@/components/audio-lesson/LessonSubtitlesPanel';
 import { AudioSessionStatus } from '@/components/audio-lesson/AudioSessionStatus';
 import { StreamCallProvider } from '@/components/audio-lesson/StreamCallProvider';
 
@@ -27,8 +22,6 @@ export default function LessonScreen() {
   const { user, isSignedIn } = useUser();
   const { selectedLanguageId } = useUserStore();
 
-  const [subtitlesVisible, setSubtitlesVisible] = useState(false);
-  const [cameraPreviewVisible, setCameraPreviewVisible] = useState(true);
   const lessonStartTimeRef = useRef<number | null>(null);
   const lastQuestionIndexRef = useRef(0);
   const lessonStartedRef = useRef(false);
@@ -40,20 +33,16 @@ export default function LessonScreen() {
     [id, selectedLanguageId]
   );
 
-  const bubbleLines = useMemo(
-    () => (context ? getTeacherBubbleLines(context.lesson) : null),
-    [context]
-  );
-
   const {
     status,
     agentStatus,
     errorMessage,
-    micMuted,
+    isSpeaking,
     streamAvailable,
     client,
     call,
-    toggleMic,
+    startSpeaking,
+    stopSpeaking,
     endCall,
     retry,
   } = useAudioLessonCall({
@@ -118,12 +107,15 @@ export default function LessonScreen() {
   }, [captureLessonAbandoned]);
 
   const handleEndCall = async () => {
+    if (isSpeaking) {
+      await stopSpeaking();
+    }
     captureLessonAbandoned();
     await endCall();
     router.back();
   };
 
-  if (!context || !bubbleLines) {
+  if (!context) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
         <View className="items-center justify-center flex-1 px-6">
@@ -152,9 +144,8 @@ export default function LessonScreen() {
   }
 
   const { lesson, language } = context;
-  const userSeed = user?.id ?? lesson.id;
   const inPreviewMode = isExpoGo() || !streamAvailable;
-  const controlsDisabled = !inPreviewMode && status !== 'joined';
+  const micDisabled = !inPreviewMode && status !== 'joined';
   const isBusy = status === 'loading' || status === 'connecting';
   const headerStatus = inPreviewMode && status === 'idle' ? 'joined' : status;
 
@@ -166,8 +157,9 @@ export default function LessonScreen() {
     >
       <AudioLessonHeader
         onBack={handleEndCall}
+        onEndCall={handleEndCall}
         callStatus={headerStatus}
-        micMuted={micMuted}
+        isSpeaking={isSpeaking}
       />
 
       {isExpoGo() ? (
@@ -187,7 +179,7 @@ export default function LessonScreen() {
           lessonGoal={lesson.goals?.[0]?.description ?? lesson.description}
           userName={user?.fullName ?? user?.firstName}
           errorMessage={errorMessage}
-          micMuted={micMuted}
+          isSpeaking={isSpeaking}
           onRetry={retry}
         />
       ) : null}
@@ -201,27 +193,16 @@ export default function LessonScreen() {
       <TeacherPreviewCard
         teacherImage={getTeacherImage()}
         backgroundImage={getPreviewBackgroundImage()}
-        userInsetImage={getUserInsetImage(userSeed)}
-        showUserInset={cameraPreviewVisible}
-        primaryLine={bubbleLines.primary}
-        secondaryLine={bubbleLines.secondary}
       />
 
-      {subtitlesVisible ? (
-        <LessonSubtitlesPanel lesson={lesson} language={language} />
-      ) : null}
-
-      <AudioCallControls
-        micMuted={micMuted}
-        subtitlesOn={subtitlesVisible}
-        disabled={controlsDisabled}
-        onToggleMic={() => {
-          void toggleMic();
+      <AudioMicButton
+        isSpeaking={isSpeaking}
+        disabled={micDisabled}
+        onPressIn={() => {
+          void startSpeaking();
         }}
-        onToggleSubtitles={() => setSubtitlesVisible((value) => !value)}
-        onToggleCamera={() => setCameraPreviewVisible((value) => !value)}
-        onEndCall={() => {
-          void handleEndCall();
+        onPressOut={() => {
+          void stopSpeaking();
         }}
       />
 
