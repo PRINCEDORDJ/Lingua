@@ -17,11 +17,12 @@ interface UseAudioLessonCallResult {
   status: AudioCallStatus;
   agentStatus: AgentStatus;
   errorMessage: string | null;
-  micMuted: boolean;
+  isSpeaking: boolean;
   streamAvailable: boolean;
   client: unknown;
   call: unknown;
-  toggleMic: () => Promise<void>;
+  startSpeaking: () => Promise<void>;
+  stopSpeaking: () => Promise<void>;
   endCall: () => Promise<void>;
   retry: () => void;
 }
@@ -40,7 +41,7 @@ export function useAudioLessonCall({
   const [status, setStatus] = useState<AudioCallStatus>('idle');
   const [agentStatus, setAgentStatus] = useState<AgentStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [micMuted, setMicMuted] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [streamAvailable, setStreamAvailable] = useState(false);
   const [client, setClient] = useState<unknown>(null);
   const [call, setCall] = useState<unknown>(null);
@@ -49,7 +50,7 @@ export function useAudioLessonCall({
   const callRef = useRef<unknown>(null);
   const clientRef = useRef<unknown>(null);
   const agentSessionRef = useRef<AgentSessionInfo | null>(null);
-  const previewMicRef = useRef(false);
+  const previewSpeakingRef = useRef(false);
 
   const retry = useCallback(() => {
     setErrorMessage(null);
@@ -164,11 +165,10 @@ export function useAudioLessonCall({
         }
 
         await activeCall.camera.disable();
-        await activeCall.microphone.enable();
-        setMicMuted(false);
+        await activeCall.microphone.disable();
+        setIsSpeaking(false);
         setStatus('joined');
 
-        // Start Vision Agent
         try {
           setAgentStatus('connecting');
           const session = await startAgent(getClerkToken, {
@@ -212,6 +212,7 @@ export function useAudioLessonCall({
       const cleanup = async () => {
         const currentCall = callRef.current as {
           leave: () => Promise<void>;
+          microphone?: { disable: () => Promise<void> };
         } | null;
         const currentClient = clientRef.current as {
           disconnectUser: () => Promise<void>;
@@ -227,6 +228,9 @@ export function useAudioLessonCall({
             callId: currentAgentSession.call_id,
             sessionId: currentAgentSession.session_id,
           }).catch(() => undefined);
+        }
+        if (currentCall?.microphone) {
+          await currentCall.microphone.disable().catch(() => undefined);
         }
         if (currentCall) {
           await currentCall.leave().catch(() => undefined);
@@ -249,28 +253,41 @@ export function useAudioLessonCall({
     userName,
   ]);
 
-  const toggleMic = useCallback(async () => {
+  const startSpeaking = useCallback(async () => {
     const activeCall = callRef.current as {
-      microphone: { enable: () => Promise<void>; disable: () => Promise<void> };
+      microphone: { enable: () => Promise<void> };
     } | null;
 
     if (activeCall && status === 'joined') {
-      if (micMuted) {
-        await activeCall.microphone.enable();
-        setMicMuted(false);
-      } else {
-        await activeCall.microphone.disable();
-        setMicMuted(true);
-      }
+      await activeCall.microphone.enable();
+      setIsSpeaking(true);
       return;
     }
 
-    previewMicRef.current = !previewMicRef.current;
-    setMicMuted(previewMicRef.current);
-  }, [micMuted, status]);
+    previewSpeakingRef.current = true;
+    setIsSpeaking(true);
+  }, [status]);
+
+  const stopSpeaking = useCallback(async () => {
+    const activeCall = callRef.current as {
+      microphone: { disable: () => Promise<void> };
+    } | null;
+
+    if (activeCall && status === 'joined') {
+      await activeCall.microphone.disable();
+      setIsSpeaking(false);
+      return;
+    }
+
+    previewSpeakingRef.current = false;
+    setIsSpeaking(false);
+  }, [status]);
 
   const endCall = useCallback(async () => {
-    const activeCall = callRef.current as { leave: () => Promise<void> } | null;
+    const activeCall = callRef.current as {
+      leave: () => Promise<void>;
+      microphone?: { disable: () => Promise<void> };
+    } | null;
     const activeClient = clientRef.current as {
       disconnectUser: () => Promise<void>;
     } | null;
@@ -286,6 +303,10 @@ export function useAudioLessonCall({
           sessionId: currentAgentSession.session_id,
         }).catch(() => undefined);
         agentSessionRef.current = null;
+      }
+
+      if (activeCall?.microphone) {
+        await activeCall.microphone.disable().catch(() => undefined);
       }
 
       if (activeCall) {
@@ -306,19 +327,20 @@ export function useAudioLessonCall({
       setClient(null);
     }
 
-    previewMicRef.current = false;
-    setMicMuted(false);
+    previewSpeakingRef.current = false;
+    setIsSpeaking(false);
   }, [getToken]);
 
   return {
     status,
     agentStatus,
     errorMessage: isExpoGo() ? null : errorMessage,
-    micMuted,
+    isSpeaking,
     streamAvailable,
     client,
     call,
-    toggleMic,
+    startSpeaking,
+    stopSpeaking,
     endCall,
     retry,
   };

@@ -10,7 +10,7 @@ interface AudioSessionStatusProps {
   lessonGoal?: string;
   userName?: string | null;
   errorMessage?: string | null;
-  micMuted?: boolean;
+  isSpeaking?: boolean;
   onRetry?: () => void;
 }
 
@@ -21,7 +21,7 @@ function getStatusCopy(
   lessonTitle?: string,
   lessonGoal?: string,
   userName?: string | null,
-  micMuted?: boolean
+  isSpeaking?: boolean
 ): { label: string; detail?: string; dotClass: string } {
   if (status === 'joined') {
     if (agentStatus === 'connecting') {
@@ -38,18 +38,25 @@ function getStatusCopy(
         dotClass: 'bg-red',
       };
     }
+    if (isSpeaking) {
+      return {
+        label: 'Your turn',
+        detail: 'Speaking… release the mic when you are done.',
+        dotClass: 'bg-purple-brand',
+      };
+    }
     return {
-      label: micMuted ? 'Muted' : 'Live',
+      label: 'Listening',
       detail: [
+        'Hold the mic when you want to answer.',
         lessonTitle,
-        lessonGoal,
         userName
           ? `${userName} - ${languageName ?? 'Audio lesson'}`
           : (languageName ?? 'Audio lesson'),
       ]
         .filter(Boolean)
         .join(' - '),
-      dotClass: micMuted ? 'bg-neutral-gray400' : 'bg-primary',
+      dotClass: 'bg-primary',
     };
   }
 
@@ -85,7 +92,7 @@ function getStatusCopy(
     default:
       return {
         label: 'Ready',
-        detail: 'Tap controls below when the call is live.',
+        detail: 'Hold the mic below when the call is live.',
         dotClass: 'bg-neutral-gray400',
       };
   }
@@ -96,10 +103,10 @@ export const AudioSessionStatus: React.FC<AudioSessionStatusProps> = ({
   agentStatus = 'idle',
   languageName,
   lessonTitle,
-  lessonGoal,
+  lessonGoal: _lessonGoal,
   userName,
   errorMessage,
-  micMuted = false,
+  isSpeaking = false,
   onRetry,
 }) => {
   const copy = getStatusCopy(
@@ -107,9 +114,9 @@ export const AudioSessionStatus: React.FC<AudioSessionStatusProps> = ({
     agentStatus,
     languageName,
     lessonTitle,
-    lessonGoal,
+    _lessonGoal,
     userName,
-    micMuted
+    isSpeaking
   );
 
   return (
