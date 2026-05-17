@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import type { AudioCallStatus } from '@/types/stream';
+import type { AudioCallStatus, AgentStatus } from '@/types/stream';
 
 interface AudioSessionStatusProps {
   status: AudioCallStatus;
+  agentStatus?: AgentStatus;
   languageName?: string;
   userName?: string | null;
   errorMessage?: string | null;
@@ -13,10 +14,35 @@ interface AudioSessionStatusProps {
 
 function getStatusCopy(
   status: AudioCallStatus,
+  agentStatus: AgentStatus = 'idle',
   languageName?: string,
   userName?: string | null,
   micMuted?: boolean
 ): { label: string; detail?: string; dotClass: string } {
+  if (status === 'joined') {
+    if (agentStatus === 'connecting') {
+      return {
+        label: 'Teacher joining',
+        detail: 'AI teacher is entering the call…',
+        dotClass: 'bg-yellow',
+      };
+    }
+    if (agentStatus === 'failed') {
+      return {
+        label: 'Teacher unavailable',
+        detail: 'The AI teacher could not join. Tap end and retry.',
+        dotClass: 'bg-red',
+      };
+    }
+    return {
+      label: micMuted ? 'Muted' : 'Live',
+      detail: userName
+        ? `${userName} · ${languageName ?? 'Audio lesson'}`
+        : (languageName ?? 'Audio lesson'),
+      dotClass: micMuted ? 'bg-neutral-gray400' : 'bg-primary',
+    };
+  }
+
   switch (status) {
     case 'loading':
       return {
@@ -31,14 +57,6 @@ function getStatusCopy(
           ? `Joining your ${languageName} lesson`
           : 'Joining your lesson',
         dotClass: 'bg-yellow',
-      };
-    case 'joined':
-      return {
-        label: micMuted ? 'Muted' : 'Live',
-        detail: userName
-          ? `${userName} · ${languageName ?? 'Audio lesson'}`
-          : (languageName ?? 'Audio lesson'),
-        dotClass: micMuted ? 'bg-neutral-gray400' : 'bg-primary',
       };
     case 'error':
       return {
@@ -63,13 +81,14 @@ function getStatusCopy(
 
 export const AudioSessionStatus: React.FC<AudioSessionStatusProps> = ({
   status,
+  agentStatus = 'idle',
   languageName,
   userName,
   errorMessage,
   micMuted = false,
   onRetry,
 }) => {
-  const copy = getStatusCopy(status, languageName, userName, micMuted);
+  const copy = getStatusCopy(status, agentStatus, languageName, userName, micMuted);
 
   return (
     <View className="mx-4 mt-3 rounded-2xl border border-neutral-gray200 bg-neutral-white px-4 py-3">

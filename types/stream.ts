@@ -6,6 +6,8 @@ export type AudioCallStatus =
   | 'error'
   | 'ended';
 
+export type AgentStatus = 'idle' | 'connecting' | 'connected' | 'failed';
+
 export interface StreamCredentials {
   apiKey: string;
   userId: string;
