@@ -19,6 +19,7 @@ import { VerificationModal } from "@/components/VerificationModal";
 import { GoogleIcon } from "@/components/GoogleIcon";
 import { useSignUp } from "@clerk/expo/legacy";
 import { useSSO } from "@clerk/expo";
+import { markPendingSignupIdentify } from "@/lib/analytics";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 
@@ -81,6 +82,7 @@ export default function SignUpScreen() {
       });
 
       if (completeSignUp.status === "complete") {
+        await markPendingSignupIdentify(completeSignUp.createdUserId);
         await setActive({ session: completeSignUp.createdSessionId });
         setModalVisible(false);
         // Let (auth)/_layout.tsx handle the redirect reactively
@@ -109,12 +111,13 @@ export default function SignUpScreen() {
   const onSelectAuth = async (strategy: "oauth_google" | "oauth_apple") => {
     try {
       const redirectUrl = Linking.createURL("/language-selection");
-      const { createdSessionId, setActive: setSessionActive } = await startSSOFlow({
+      const { createdSessionId, setActive: setSessionActive, signUp: completedSignUp } = await startSSOFlow({
         strategy,
         redirectUrl,
       });
 
       if (createdSessionId) {
+        await markPendingSignupIdentify(completedSignUp?.createdUserId);
         await setSessionActive!({ session: createdSessionId });
         // Let (auth)/_layout.tsx handle the redirect reactively
       }

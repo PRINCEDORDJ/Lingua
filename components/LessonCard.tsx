@@ -1,9 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, ImageSourcePropType } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import type { LessonVisualStatus } from '@/types/learning';
 
 interface LessonCardProps {
+  lessonId: string;
   number: number;
   title: string;
   subtitle?: string;
@@ -14,6 +16,7 @@ interface LessonCardProps {
 }
 
 export const LessonCard: React.FC<LessonCardProps> = ({
+  lessonId,
   number,
   title,
   subtitle,
@@ -22,12 +25,22 @@ export const LessonCard: React.FC<LessonCardProps> = ({
   imageSource,
   onPress,
 }) => {
+  const router = useRouter();
   const isInProgress = status === 'in-progress';
   const isCompleted = status === 'completed';
 
+  const handlePress = () => {
+    if (onPress) {
+      onPress();
+      return;
+    }
+
+    router.push(`/lesson/${lessonId}`);
+  };
+
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={handlePress}
       activeOpacity={0.8}
       className={`mb-3 w-full rounded-2xl border-2 p-4 ${
         isInProgress

@@ -28,6 +28,8 @@ A Duolingo-inspired AI language learning mobile app built with Expo and React Na
 2. **Configure environment** (`.env.local`)
 
    - `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
+   - `EXPO_PUBLIC_POSTHOG_KEY` (from [PostHog](https://posthog.com/) project settings)
+   - `EXPO_PUBLIC_POSTHOG_HOST` (optional; defaults to `https://us.i.posthog.com` — use `https://eu.i.posthog.com` for EU)
    - `CLERK_SECRET_KEY` (server API routes)
    - `STREAM_API_KEY` and `STREAM_API_SECRET` (server only — never expose in the client)
    - `GOOGLE_API_KEY` (Vision Agent AI teacher — from [Google AI Studio](https://aistudio.google.com/))

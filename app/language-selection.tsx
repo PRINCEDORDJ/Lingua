@@ -16,6 +16,7 @@ import { LanguageCard } from "@/components/LanguageCard";
 import { useUserStore } from "@/store/useUserStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/expo";
+import { posthog } from "@/lib/posthog";
 
 export default function LanguageSelectionScreen() {
   const router = useRouter();
@@ -30,7 +31,14 @@ export default function LanguageSelectionScreen() {
   }, [searchQuery]);
 
   const handleConfirm = () => {
-    if (selectedLanguageId) {
+    const selectedLanguage = languages.find((lang) => lang.id === selectedLanguageId);
+
+    if (selectedLanguage) {
+      posthog?.capture("language_selected", {
+        language_code: selectedLanguage.code,
+        language_name: selectedLanguage.name,
+      });
+
       if (isSignedIn) {
         router.replace("/(tabs)");
       } else {

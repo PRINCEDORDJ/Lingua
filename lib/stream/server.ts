@@ -3,7 +3,8 @@ import { StreamClient } from '@stream-io/node-sdk';
 import { getLessonContext } from '@/lib/lessonContext';
 import { buildLessonCallId } from '@/lib/stream/callId';
 
-const CALL_TYPE = 'default';
+const CALL_TYPE = 'audio_room';
+const AGENT_USER_ID = 'ai-language-teacher';
 
 function getStreamSecret(): string | undefined {
   return process.env.STREAM_API_SECRET ?? process.env.STREAM_SECRET_KEY;
@@ -96,24 +97,48 @@ export async function getOrCreateLessonCall(params: {
   const callId = buildLessonCallId(language.id, lesson.id);
   const client = getStreamClient();
   const call = client.video.call(CALL_TYPE, callId);
+  const lessonGoal = lesson.goals?.[0]?.description ?? lesson.description;
+
+  await client.upsertUsers([
+    {
+      id: AGENT_USER_ID,
+      name: 'AI Language Teacher',
+      role: 'admin',
+    },
+  ]);
 
   await call.getOrCreate({
     data: {
       created_by_id: params.userId,
+      video: false,
       members: [
         { user_id: params.userId, role: 'admin' },
-        { user_id: 'ai-language-teacher', role: 'admin' },
+        { user_id: AGENT_USER_ID, role: 'admin' },
       ],
       custom: {
         lessonId: lesson.id,
+        lesson_id: lesson.id,
         languageId: language.id,
+        language_id: language.id,
+        languageCode: language.code,
+        language_code: language.code,
         lessonTitle: lesson.title,
+        lesson_title: lesson.title,
         languageName: language.name,
-        lessonGoal: lesson.goals?.[0]?.description ?? lesson.description,
-        vocabulary: lesson.vocabulary,
-        phrases: lesson.phrases,
+        language_name: language.name,
+        lessonDescription: lesson.description,
+        lesson_description: lesson.description,
+        lessonGoal,
+        lesson_goal: lessonGoal,
+        goals: lesson.goals ?? [],
+        vocabulary: lesson.vocabulary ?? [],
+        phrases: lesson.phrases ?? [],
+        aiTeacherPrompt: lesson.aiTeacherPrompt ?? null,
+        ai_teacher_prompt: lesson.aiTeacherPrompt ?? null,
         teacherInstructions: lesson.aiTeacherPrompt?.instructions,
+        teacher_instructions: lesson.aiTeacherPrompt?.instructions,
         teacherContext: lesson.aiTeacherPrompt?.context,
+        teacher_context: lesson.aiTeacherPrompt?.context,
       },
       settings_override: {
         audio: {
@@ -125,6 +150,17 @@ export async function getOrCreateLessonCall(params: {
         },
       },
     },
+  });
+
+  await call.updateCallMembers({
+    update_members: [
+      { user_id: params.userId, role: 'admin' },
+      { user_id: AGENT_USER_ID, role: 'admin' },
+    ],
+  });
+
+  await call.goLive({ start_closed_caption: true }).catch((error: unknown) => {
+    console.warn('[stream/call] Could not go live', error);
   });
 
   return {

@@ -17,7 +17,7 @@ export const CustomTabBar = ({ state, descriptors, navigation }: any) => {
   // Filter out routes that shouldn't be in the tab bar
   const visibleRoutes = state.routes.filter((route: any) => {
     const { options } = descriptors[route.key];
-    return options.href !== null;
+    return options.href !== null && route.name !== "lesson";
   });
 
   const activeVisibleIndex = visibleRoutes.findIndex(

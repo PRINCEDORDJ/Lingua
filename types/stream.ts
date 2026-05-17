@@ -19,3 +19,9 @@ export interface LessonCallInfo {
   callId: string;
   callCid: string;
 }
+
+export interface AgentSessionInfo {
+  session_id: string;
+  call_id: string;
+  session_started_at?: string;
+}

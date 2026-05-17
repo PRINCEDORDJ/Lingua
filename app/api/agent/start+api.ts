@@ -10,7 +10,10 @@ export async function POST(request: Request) {
       return jsonError('callId and callType are required', 400);
     }
 
-    const session = await startAgentSession(body);
+    const session = await startAgentSession({
+      callId: body.callId,
+      callType: body.callType,
+    });
     return Response.json(session);
   } catch (error) {
     if (error instanceof Response) return error;
