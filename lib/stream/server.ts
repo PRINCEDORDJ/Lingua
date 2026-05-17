@@ -100,13 +100,20 @@ export async function getOrCreateLessonCall(params: {
   await call.getOrCreate({
     data: {
       created_by_id: params.userId,
-      members: [{ user_id: params.userId, role: 'admin' }],
+      members: [
+        { user_id: params.userId, role: 'admin' },
+        { user_id: 'ai-language-teacher', role: 'admin' },
+      ],
       custom: {
         lessonId: lesson.id,
         languageId: language.id,
         lessonTitle: lesson.title,
         languageName: language.name,
         lessonGoal: lesson.goals?.[0]?.description ?? lesson.description,
+        vocabulary: lesson.vocabulary,
+        phrases: lesson.phrases,
+        teacherInstructions: lesson.aiTeacherPrompt?.instructions,
+        teacherContext: lesson.aiTeacherPrompt?.context,
       },
       settings_override: {
         audio: {

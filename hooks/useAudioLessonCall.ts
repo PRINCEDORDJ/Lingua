@@ -2,7 +2,8 @@ import { useAuth } from '@clerk/expo';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createLessonCall, fetchStreamCredentials } from '@/lib/stream/api';
 import { isExpoGo, loadStreamSdk } from '@/lib/stream/loadStreamSdk';
-import type { AudioCallStatus } from '@/types/stream';
+import { startAgent, stopAgent } from '@/lib/agentApi';
+import type { AudioCallStatus, AgentStatus } from '@/types/stream';
 
 interface UseAudioLessonCallParams {
   lessonId: string;
@@ -14,6 +15,7 @@ interface UseAudioLessonCallParams {
 
 interface UseAudioLessonCallResult {
   status: AudioCallStatus;
+  agentStatus: AgentStatus;
   errorMessage: string | null;
   micMuted: boolean;
   streamAvailable: boolean;
@@ -36,6 +38,7 @@ export function useAudioLessonCall({
 }: UseAudioLessonCallParams): UseAudioLessonCallResult {
   const { getToken, isSignedIn } = useAuth();
   const [status, setStatus] = useState<AudioCallStatus>('idle');
+  const [agentStatus, setAgentStatus] = useState<AgentStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [micMuted, setMicMuted] = useState(false);
   const [streamAvailable, setStreamAvailable] = useState(false);
@@ -45,11 +48,13 @@ export function useAudioLessonCall({
 
   const callRef = useRef<unknown>(null);
   const clientRef = useRef<unknown>(null);
+  const agentSessionIdRef = useRef<string | null>(null);
   const previewMicRef = useRef(false);
 
   const retry = useCallback(() => {
     setErrorMessage(null);
     setStatus('idle');
+    setAgentStatus('idle');
     setRetryKey((value) => value + 1);
   }, []);
 
@@ -162,6 +167,20 @@ export function useAudioLessonCall({
         await activeCall.microphone.enable();
         setMicMuted(false);
         setStatus('joined');
+
+        // Start Vision Agent
+        try {
+          setAgentStatus('connecting');
+          const { session_id } = await startAgent(getClerkToken, {
+            callId: lessonCall.callId,
+            callType: lessonCall.callType,
+          });
+          agentSessionIdRef.current = session_id;
+          setAgentStatus('connected');
+        } catch (agentError) {
+          console.error('[agent/start] error', agentError);
+          setAgentStatus('failed');
+        }
       } catch (error) {
         if (!mounted) {
           return;
@@ -197,10 +216,15 @@ export function useAudioLessonCall({
         const currentClient = clientRef.current as {
           disconnectUser: () => Promise<void>;
         } | null;
+        const currentAgentSessionId = agentSessionIdRef.current;
 
         callRef.current = null;
         clientRef.current = null;
+        agentSessionIdRef.current = null;
 
+        if (currentAgentSessionId) {
+          await stopAgent(getToken, currentAgentSessionId).catch(() => undefined);
+        }
         if (currentCall) {
           await currentCall.leave().catch(() => undefined);
         }
@@ -247,9 +271,16 @@ export function useAudioLessonCall({
     const activeClient = clientRef.current as {
       disconnectUser: () => Promise<void>;
     } | null;
+    const currentAgentSessionId = agentSessionIdRef.current;
 
-    if (activeCall || activeClient) {
+    if (activeCall || activeClient || currentAgentSessionId) {
       setStatus('ended');
+      setAgentStatus('idle');
+
+      if (currentAgentSessionId) {
+        await stopAgent(getToken, currentAgentSessionId).catch(() => undefined);
+        agentSessionIdRef.current = null;
+      }
 
       if (activeCall) {
         try {
@@ -271,10 +302,11 @@ export function useAudioLessonCall({
 
     previewMicRef.current = false;
     setMicMuted(false);
-  }, []);
+  }, [getToken]);
 
   return {
     status,
+    agentStatus,
     errorMessage: isExpoGo() ? null : errorMessage,
     micMuted,
     streamAvailable,

@@ -41,6 +41,7 @@ export default function LessonScreen() {
 
   const {
     status,
+    agentStatus,
     errorMessage,
     micMuted,
     streamAvailable,
@@ -120,6 +121,7 @@ export default function LessonScreen() {
       {!inPreviewMode ? (
         <AudioSessionStatus
           status={status}
+          agentStatus={agentStatus}
           languageName={language.name}
           userName={user?.fullName ?? user?.firstName}
           errorMessage={errorMessage}

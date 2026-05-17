@@ -30,6 +30,7 @@ A Duolingo-inspired AI language learning mobile app built with Expo and React Na
    - `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY`
    - `CLERK_SECRET_KEY` (server API routes)
    - `STREAM_API_KEY` and `STREAM_API_SECRET` (server only — never expose in the client)
+   - `GOOGLE_API_KEY` (Vision Agent AI teacher — from [Google AI Studio](https://aistudio.google.com/))
 
 3. **Start the app**
 
@@ -47,6 +48,18 @@ A Duolingo-inspired AI language learning mobile app built with Expo and React Na
    ```bash
    npx expo start
    ```
+
+## Vision Agent (AI audio teacher)
+
+The Python service in `vision-agent/` joins Stream lesson calls as a voice-only teacher (Gemini Realtime + Stream Edge).
+
+```bash
+cd vision-agent
+uv sync
+uv run main.py serve --host 127.0.0.1 --port 8000
+```
+
+Health check: `http://127.0.0.1:8000/health`
 
 ## Development
 
