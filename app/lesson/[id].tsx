@@ -15,6 +15,7 @@ import { AudioMicButton } from '@/components/audio-lesson/AudioMicButton';
 import { LessonFeedbackMetrics } from '@/components/audio-lesson/LessonFeedbackMetrics';
 import { AudioSessionStatus } from '@/components/audio-lesson/AudioSessionStatus';
 import { StreamCallProvider } from '@/components/audio-lesson/StreamCallProvider';
+import { LessonLiveCaptionsPanel } from '@/components/audio-lesson/LessonLiveCaptionsPanel';
 
 export default function LessonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -194,6 +195,8 @@ export default function LessonScreen() {
         teacherImage={getTeacherImage()}
         backgroundImage={getPreviewBackgroundImage()}
       />
+
+      {!inPreviewMode && status === 'joined' ? <LessonLiveCaptionsPanel /> : null}
 
       <AudioMicButton
         isSpeaking={isSpeaking}
