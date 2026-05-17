@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useUser } from '@clerk/expo';
+import { posthog } from '@/lib/posthog';
 import { useUserStore } from '@/store/useUserStore';
 import { getLessonContext, getTeacherBubbleLines } from '@/lib/lessonContext';
 import { isExpoGo } from '@/lib/stream/loadStreamSdk';
@@ -28,6 +29,11 @@ export default function LessonScreen() {
 
   const [subtitlesVisible, setSubtitlesVisible] = useState(false);
   const [cameraPreviewVisible, setCameraPreviewVisible] = useState(true);
+  const lessonStartTimeRef = useRef<number | null>(null);
+  const lastQuestionIndexRef = useRef(0);
+  const lessonStartedRef = useRef(false);
+  const lessonCompletedRef = useRef(false);
+  const lessonAbandonedRef = useRef(false);
 
   const context = useMemo(
     () => (id ? getLessonContext(id, selectedLanguageId) : null),
@@ -58,7 +64,61 @@ export default function LessonScreen() {
     enabled: Boolean(context && isSignedIn && id && context.language.id),
   });
 
+  const lessonNumber = useMemo(() => {
+    if (!context?.unit) return 0;
+
+    const lessonIndex = context.unit.lessons.findIndex(
+      (unitLesson) => unitLesson.id === context.lesson.id
+    );
+
+    return lessonIndex >= 0 ? lessonIndex + 1 : 0;
+  }, [context]);
+
+  const captureLessonAbandoned = useCallback(() => {
+    if (
+      !posthog ||
+      !context ||
+      !lessonStartedRef.current ||
+      lessonCompletedRef.current ||
+      lessonAbandonedRef.current ||
+      lessonStartTimeRef.current === null
+    ) {
+      return;
+    }
+
+    lessonAbandonedRef.current = true;
+
+    posthog.capture('lesson_abandoned', {
+      lesson_id: context.lesson.id,
+      time_into_lesson_seconds: Math.max(
+        0,
+        Math.round((Date.now() - lessonStartTimeRef.current) / 1000)
+      ),
+      last_question_index: lastQuestionIndexRef.current,
+    });
+  }, [context, posthog]);
+
+  useEffect(() => {
+    if (!posthog || !context || !isSignedIn || lessonStartedRef.current) return;
+
+    lessonStartedRef.current = true;
+    lessonStartTimeRef.current = Date.now();
+
+    posthog.capture('lesson_started', {
+      lesson_id: context.lesson.id,
+      language: context.language.code,
+      lesson_number: lessonNumber,
+    });
+  }, [context, isSignedIn, lessonNumber, posthog]);
+
+  useEffect(() => {
+    return () => {
+      captureLessonAbandoned();
+    };
+  }, [captureLessonAbandoned]);
+
   const handleEndCall = async () => {
+    captureLessonAbandoned();
     await endCall();
     router.back();
   };
@@ -66,7 +126,7 @@ export default function LessonScreen() {
   if (!context || !bubbleLines) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-        <View className="flex-1 items-center justify-center px-6">
+        <View className="items-center justify-center flex-1 px-6">
           <Text className="h3 text-neutral-dark">Lesson not found</Text>
           <TouchableOpacity className="mt-4" onPress={() => router.back()}>
             <Text className="h4 text-purple-brand">Go back</Text>
@@ -79,8 +139,8 @@ export default function LessonScreen() {
   if (!isSignedIn) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-        <View className="flex-1 items-center justify-center px-6">
-          <Text className="h3 text-center text-neutral-dark">
+        <View className="items-center justify-center flex-1 px-6">
+          <Text className="text-center h3 text-neutral-dark">
             Sign in to start your audio lesson
           </Text>
           <TouchableOpacity className="mt-4" onPress={() => router.back()}>
@@ -111,7 +171,7 @@ export default function LessonScreen() {
       />
 
       {isExpoGo() ? (
-        <View className="mx-4 mt-2 rounded-2xl border border-yellow bg-yellow/10 px-4 py-3">
+        <View className="px-4 py-3 mx-4 mt-2 border rounded-2xl border-yellow bg-yellow/10">
           <Text className="body-sm text-neutral-dark">
             Preview mode: live audio needs a dev build (`npx expo run:android`).
           </Text>
@@ -123,6 +183,8 @@ export default function LessonScreen() {
           status={status}
           agentStatus={agentStatus}
           languageName={language.name}
+          lessonTitle={lesson.title}
+          lessonGoal={lesson.goals?.[0]?.description ?? lesson.description}
           userName={user?.fullName ?? user?.firstName}
           errorMessage={errorMessage}
           micMuted={micMuted}

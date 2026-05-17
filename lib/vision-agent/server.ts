@@ -1,23 +1,26 @@
-import { jsonError } from '@/lib/stream/server';
-
 const VISION_AGENT_URL = process.env.VISION_AGENT_URL || 'http://localhost:8080';
 
 export async function startAgentSession(params: {
   callId: string;
   callType: string;
-  [key: string]: any;
 }) {
   try {
-    const response = await fetch(`${VISION_AGENT_URL}/sessions`, {
+    const callId = encodeURIComponent(params.callId);
+    const response = await fetch(`${VISION_AGENT_URL}/calls/${callId}/sessions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(params),
+      body: JSON.stringify({
+        call_type: params.callType,
+      }),
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
+      const error = (await response.json().catch(() => ({}))) as {
+        detail?: string;
+        message?: string;
+      };
       throw new Error(error.message || `Vision Agent server returned ${response.status}`);
     }
 
@@ -28,14 +31,22 @@ export async function startAgentSession(params: {
   }
 }
 
-export async function stopAgentSession(sessionId: string) {
+export async function stopAgentSession(params: {
+  callId: string;
+  sessionId: string;
+}) {
   try {
-    const response = await fetch(`${VISION_AGENT_URL}/sessions/${sessionId}`, {
+    const callId = encodeURIComponent(params.callId);
+    const sessionId = encodeURIComponent(params.sessionId);
+    const response = await fetch(`${VISION_AGENT_URL}/calls/${callId}/sessions/${sessionId}`, {
       method: 'DELETE',
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
+      const error = (await response.json().catch(() => ({}))) as {
+        detail?: string;
+        message?: string;
+      };
       throw new Error(error.message || `Vision Agent server returned ${response.status}`);
     }
 

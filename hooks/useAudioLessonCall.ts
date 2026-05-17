@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createLessonCall, fetchStreamCredentials } from '@/lib/stream/api';
 import { isExpoGo, loadStreamSdk } from '@/lib/stream/loadStreamSdk';
 import { startAgent, stopAgent } from '@/lib/agentApi';
-import type { AudioCallStatus, AgentStatus } from '@/types/stream';
+import type { AgentSessionInfo, AudioCallStatus, AgentStatus } from '@/types/stream';
 
 interface UseAudioLessonCallParams {
   lessonId: string;
@@ -48,7 +48,7 @@ export function useAudioLessonCall({
 
   const callRef = useRef<unknown>(null);
   const clientRef = useRef<unknown>(null);
-  const agentSessionIdRef = useRef<string | null>(null);
+  const agentSessionRef = useRef<AgentSessionInfo | null>(null);
   const previewMicRef = useRef(false);
 
   const retry = useCallback(() => {
@@ -171,11 +171,11 @@ export function useAudioLessonCall({
         // Start Vision Agent
         try {
           setAgentStatus('connecting');
-          const { session_id } = await startAgent(getClerkToken, {
+          const session = await startAgent(getClerkToken, {
             callId: lessonCall.callId,
             callType: lessonCall.callType,
           });
-          agentSessionIdRef.current = session_id;
+          agentSessionRef.current = session;
           setAgentStatus('connected');
         } catch (agentError) {
           console.error('[agent/start] error', agentError);
@@ -216,14 +216,17 @@ export function useAudioLessonCall({
         const currentClient = clientRef.current as {
           disconnectUser: () => Promise<void>;
         } | null;
-        const currentAgentSessionId = agentSessionIdRef.current;
+        const currentAgentSession = agentSessionRef.current;
 
         callRef.current = null;
         clientRef.current = null;
-        agentSessionIdRef.current = null;
+        agentSessionRef.current = null;
 
-        if (currentAgentSessionId) {
-          await stopAgent(getToken, currentAgentSessionId).catch(() => undefined);
+        if (currentAgentSession) {
+          await stopAgent(getToken, {
+            callId: currentAgentSession.call_id,
+            sessionId: currentAgentSession.session_id,
+          }).catch(() => undefined);
         }
         if (currentCall) {
           await currentCall.leave().catch(() => undefined);
@@ -271,15 +274,18 @@ export function useAudioLessonCall({
     const activeClient = clientRef.current as {
       disconnectUser: () => Promise<void>;
     } | null;
-    const currentAgentSessionId = agentSessionIdRef.current;
+    const currentAgentSession = agentSessionRef.current;
 
-    if (activeCall || activeClient || currentAgentSessionId) {
+    if (activeCall || activeClient || currentAgentSession) {
       setStatus('ended');
       setAgentStatus('idle');
 
-      if (currentAgentSessionId) {
-        await stopAgent(getToken, currentAgentSessionId).catch(() => undefined);
-        agentSessionIdRef.current = null;
+      if (currentAgentSession) {
+        await stopAgent(getToken, {
+          callId: currentAgentSession.call_id,
+          sessionId: currentAgentSession.session_id,
+        }).catch(() => undefined);
+        agentSessionRef.current = null;
       }
 
       if (activeCall) {

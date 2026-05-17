@@ -5,13 +5,14 @@ export async function DELETE(request: Request) {
   try {
     await requireClerkUserId(request);
     const { searchParams } = new URL(request.url);
+    const callId = searchParams.get('callId');
     const sessionId = searchParams.get('sessionId');
 
-    if (!sessionId) {
-      return jsonError('sessionId is required', 400);
+    if (!callId || !sessionId) {
+      return jsonError('callId and sessionId are required', 400);
     }
 
-    await stopAgentSession(sessionId);
+    await stopAgentSession({ callId, sessionId });
     return Response.json({ success: true });
   } catch (error) {
     if (error instanceof Response) return error;

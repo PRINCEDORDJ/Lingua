@@ -6,6 +6,8 @@ interface AudioSessionStatusProps {
   status: AudioCallStatus;
   agentStatus?: AgentStatus;
   languageName?: string;
+  lessonTitle?: string;
+  lessonGoal?: string;
   userName?: string | null;
   errorMessage?: string | null;
   micMuted?: boolean;
@@ -16,6 +18,8 @@ function getStatusCopy(
   status: AudioCallStatus,
   agentStatus: AgentStatus = 'idle',
   languageName?: string,
+  lessonTitle?: string,
+  lessonGoal?: string,
   userName?: string | null,
   micMuted?: boolean
 ): { label: string; detail?: string; dotClass: string } {
@@ -23,7 +27,7 @@ function getStatusCopy(
     if (agentStatus === 'connecting') {
       return {
         label: 'Teacher joining',
-        detail: 'AI teacher is entering the call…',
+        detail: 'AI teacher is entering the call...',
         dotClass: 'bg-yellow',
       };
     }
@@ -36,9 +40,15 @@ function getStatusCopy(
     }
     return {
       label: micMuted ? 'Muted' : 'Live',
-      detail: userName
-        ? `${userName} · ${languageName ?? 'Audio lesson'}`
-        : (languageName ?? 'Audio lesson'),
+      detail: [
+        lessonTitle,
+        lessonGoal,
+        userName
+          ? `${userName} - ${languageName ?? 'Audio lesson'}`
+          : (languageName ?? 'Audio lesson'),
+      ]
+        .filter(Boolean)
+        .join(' - '),
       dotClass: micMuted ? 'bg-neutral-gray400' : 'bg-primary',
     };
   }
@@ -47,15 +57,17 @@ function getStatusCopy(
     case 'loading':
       return {
         label: 'Preparing lesson',
-        detail: 'Setting up your audio session…',
+        detail: 'Setting up your audio session...',
         dotClass: 'bg-neutral-gray400',
       };
     case 'connecting':
       return {
         label: 'Connecting',
-        detail: languageName
-          ? `Joining your ${languageName} lesson`
-          : 'Joining your lesson',
+        detail: lessonTitle
+          ? `Joining ${lessonTitle}`
+          : languageName
+            ? `Joining your ${languageName} lesson`
+            : 'Joining your lesson',
         dotClass: 'bg-yellow',
       };
     case 'error':
@@ -83,12 +95,22 @@ export const AudioSessionStatus: React.FC<AudioSessionStatusProps> = ({
   status,
   agentStatus = 'idle',
   languageName,
+  lessonTitle,
+  lessonGoal,
   userName,
   errorMessage,
   micMuted = false,
   onRetry,
 }) => {
-  const copy = getStatusCopy(status, agentStatus, languageName, userName, micMuted);
+  const copy = getStatusCopy(
+    status,
+    agentStatus,
+    languageName,
+    lessonTitle,
+    lessonGoal,
+    userName,
+    micMuted
+  );
 
   return (
     <View className="mx-4 mt-3 rounded-2xl border border-neutral-gray200 bg-neutral-white px-4 py-3">

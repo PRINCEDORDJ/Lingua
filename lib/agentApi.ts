@@ -1,3 +1,5 @@
+import type { AgentSessionInfo } from '@/types/stream';
+
 type GetTokenFn = () => Promise<string | null>;
 
 async function authorizedFetch(
@@ -24,7 +26,7 @@ async function authorizedFetch(
 export async function startAgent(
   getToken: GetTokenFn,
   params: { callId: string; callType: string }
-): Promise<{ session_id: string }> {
+): Promise<AgentSessionInfo> {
   const response = await authorizedFetch('/api/agent/start', getToken, {
     method: 'POST',
     body: JSON.stringify(params),
@@ -35,15 +37,20 @@ export async function startAgent(
     throw new Error(body.error ?? 'Failed to start AI teacher');
   }
 
-  return response.json() as Promise<{ session_id: string }>;
+  return response.json() as Promise<AgentSessionInfo>;
 }
 
 export async function stopAgent(
   getToken: GetTokenFn,
-  sessionId: string
+  params: { callId: string; sessionId: string }
 ): Promise<void> {
+  const query = new URLSearchParams({
+    callId: params.callId,
+    sessionId: params.sessionId,
+  });
+
   const response = await authorizedFetch(
-    `/api/agent/stop?sessionId=${sessionId}`,
+    `/api/agent/stop?${query.toString()}`,
     getToken,
     {
       method: 'DELETE',
