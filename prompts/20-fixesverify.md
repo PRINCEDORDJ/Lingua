@@ -4,16 +4,16 @@ overview: Three verified fixes (fetch timeouts, None-safe call custom data) plus
 todos:
   - id: fetch-timeout
     content: Add fetchVisionAgent with AbortController + VISION_AGENT_FETCH_TIMEOUT_MS to lib/vision-agent/server.ts
-    status: pending
+    status: completed
   - id: custom-none-fix
     content: Coerce response.call.custom to {} in vision-agent/main.py
-    status: pending
+    status: completed
   - id: live-captions-ui
     content: Add LessonLiveCaptionsPanel, extend LessonSubtitlesLive, wire into app/lesson/[id].tsx
-    status: pending
+    status: completed
   - id: validate
     content: Run npm run typecheck and npm run lint
-    status: pending
+    status: completed
 isProject: false
 ---
 

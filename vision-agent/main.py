@@ -42,7 +42,7 @@ def custom_value(custom: dict, camel_key: str, snake_key: str):
 async def join_call(agent: Agent, call_type: str, call_id: str, **kwargs) -> None:
     # Fetch lesson metadata packed into Stream call custom data by the Expo API.
     response = await agent.edge.client.call(call_type=call_type, id=call_id).get()
-    custom = getattr(response.call, "custom", {})
+    custom = getattr(response.call, "custom", None) or {}
     ai_teacher_prompt = custom.get("aiTeacherPrompt") or custom.get("ai_teacher_prompt") or {}
     teacher_instructions = custom_value(
         custom,
