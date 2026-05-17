@@ -30,7 +30,7 @@ export const TeacherPreviewCard: React.FC<TeacherPreviewCardProps> = ({
         <View style={styles.overlay} />
       </ImageBackground>
 
-      <View className="flex-1 items-center justify-center px-4 py-6">
+      <View className="flex-1 items-center justify-center px-4">
         <Image
           source={teacherImage}
           style={styles.teacherImage}
@@ -48,8 +48,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(45, 45, 45, 0.55)',
   },
   teacherImage: {
-    width: '48%',
-    height: '70%',
-    maxHeight: 220,
+    width: '100%',
+    height: '100%',
+    minHeight: '80%',
+    maxHeight: 250,
+    position: 'absolute',
+    bottom: -45,
   },
 });
